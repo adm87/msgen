@@ -44,12 +44,6 @@ func MSGen(version string) (*cobra.Command, error) {
 				return err
 			}
 
-			specFile, err = filepath.Abs(specFile)
-
-			if err != nil {
-				return err
-			}
-
 			configFile := filepath.Join(wrkDir, models.MSConfigFileName)
 
 			if utils.FileExists(configFile) {
@@ -62,11 +56,13 @@ func MSGen(version string) (*cobra.Command, error) {
 				config = loadedConfig
 			}
 
+			specFile = filepath.Join(wrkDir, specFile)
+
 			if !utils.FileExists(specFile) {
 				return ErrMissingSpecFile
 			}
 
-			return msgen.Generate(config, outDir)
+			return msgen.Generate(config, specFile, outDir)
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
@@ -74,7 +70,7 @@ func MSGen(version string) (*cobra.Command, error) {
 
 	c.PersistentFlags().StringVarP(&workingDir, "workdir", "w", ".", "Working directory for the microservice")
 	c.PersistentFlags().StringVarP(&outputDir, "output", "o", "./output", "Output directory for the generated code")
-	c.PersistentFlags().StringVarP(&specFile, "spec", "s", "", "Path to the specification file")
+	c.PersistentFlags().StringVarP(&specFile, "spec", "s", "", "Path to the specification file relative to the working directory")
 
 	if err := c.MarkPersistentFlagRequired("spec"); err != nil {
 		return nil, err
