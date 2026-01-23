@@ -1,11 +1,26 @@
 package main
 
-import "github.com/adm87/msgen/cmd"
+import (
+	"os"
+
+	"github.com/adm87/msgen/cmd"
+)
 
 var version = "0.0.0-unreleased"
 
 func main() {
-	if err := cmd.MSGen(version).Execute(); err != nil {
-		panic(err)
+	c, err := cmd.MSGen(version)
+
+	if err != nil {
+		exit(1, err.Error())
 	}
+
+	if err := c.Execute(); err != nil {
+		exit(1, err.Error())
+	}
+}
+
+func exit(code int, msg string) {
+	println(msg)
+	os.Exit(code)
 }
