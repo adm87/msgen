@@ -20,7 +20,7 @@ var (
 // MSGen creates the msgen command, validates flags and runs the generator
 func MSGen(version string) (*cobra.Command, error) {
 	config := models.DefaultMSGenConfig()
-	cmdArgs := models.MSGenArgs{}
+	cmdArgs := models.DefaultMSGenArgs()
 
 	c := &cobra.Command{
 		Use:     "msgen",
@@ -28,17 +28,17 @@ func MSGen(version string) (*cobra.Command, error) {
 		Long:    `MSGen is a tool to generate boilerplate code for microservices.`,
 		Version: version,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			wrkDir, err := filepath.Abs(cmdArgs.WorkingDir)
+			wrkDir, err := filepath.Abs(cmdArgs.WorkingDir.Value)
 			if err != nil {
 				return err
 			}
-			cmdArgs.WorkingDir = wrkDir
+			cmdArgs.WorkingDir.Value = wrkDir
 
-			outDir, err := filepath.Abs(cmdArgs.OutDir)
+			outDir, err := filepath.Abs(cmdArgs.OutDir.Value)
 			if err != nil {
 				return err
 			}
-			cmdArgs.OutDir = outDir
+			cmdArgs.OutDir.Value = outDir
 
 			configFile := filepath.Join(wrkDir, models.MSConfigFileName)
 			if utils.FileExists(configFile) {
@@ -51,8 +51,8 @@ func MSGen(version string) (*cobra.Command, error) {
 				config = loadedConfig
 			}
 
-			cmdArgs.SpecFile = filepath.Join(wrkDir, cmdArgs.SpecFile)
-			if !utils.FileExists(cmdArgs.SpecFile) {
+			cmdArgs.SpecFile.Value = filepath.Join(wrkDir, cmdArgs.SpecFile.Value)
+			if !utils.FileExists(cmdArgs.SpecFile.Value) {
 				return ErrMissingSpecFile
 			}
 
@@ -65,34 +65,40 @@ func MSGen(version string) (*cobra.Command, error) {
 		SilenceUsage:  true,
 	}
 
-	c.AddCommand(
-		create.Command(&config, &cmdArgs),
-		update.Command(&config, &cmdArgs),
-	)
+	addPersistentStringFlags(c, &cmdArgs.WorkingDir)
 
-	c.PersistentFlags().StringVarP(&cmdArgs.WorkingDir, "workdir", "w", ".", "Working directory for the microservice")
-	c.PersistentFlags().StringVarP(&cmdArgs.OutDir, "output", "o", "./output", "Output directory for the generated code")
-	c.PersistentFlags().StringVarP(&cmdArgs.SpecFile, "spec", "s", "", "Path to the specification file relative to the working directory")
+	createCmd := create.Command(&config, &cmdArgs)
+	addStringFlag(createCmd, &cmdArgs.SpecFile)
+	addStringFlag(createCmd, &cmdArgs.OutDir)
+	createCmd.MarkFlagRequired(cmdArgs.SpecFile.Name)
 
-	if err := c.MarkPersistentFlagRequired("spec"); err != nil {
-		return nil, err
-	}
+	updateCmd := update.Command(&config, &cmdArgs)
+	addStringFlag(updateCmd, &cmdArgs.SpecFile)
+	addStringFlag(updateCmd, &cmdArgs.OutDir)
+	updateCmd.MarkFlagRequired(cmdArgs.SpecFile.Name)
+
+	c.AddCommand(createCmd, updateCmd)
 
 	return c, nil
+}
+
+func addPersistentStringFlags(cmd *cobra.Command, arg *models.StringArg) {
+	cmd.PersistentFlags().StringVarP(&arg.Value, arg.Name, arg.Short, arg.Value, arg.Description)
+}
+
+func addStringFlag(cmd *cobra.Command, arg *models.StringArg) {
+	cmd.Flags().StringVarP(&arg.Value, arg.Name, arg.Short, arg.Value, arg.Description)
 }
 
 func loadMSConfig(path string) (models.MSGenConfig, error) {
 	var config models.MSGenConfig
 
 	file, err := os.Open(path)
-
 	if err != nil {
 		return config, err
 	}
-
 	defer file.Close()
 
 	err = json.NewDecoder(file).Decode(&config)
-
 	return config, err
 }
