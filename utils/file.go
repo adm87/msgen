@@ -22,3 +22,7 @@ func DirExists(path string) (bool, error) {
 	}
 	return err == nil && info.IsDir(), err
 }
+
+func WriteFile(path string, content string) error {
+	return os.WriteFile(path, []byte(content), 0644)
+}

@@ -1,0 +1,45 @@
+package templating
+
+type Node struct {
+	Name           string      // File or Directory name
+	Template       string      // Template path to use to generate this file (empty for directories)
+	Children       []*Node     // Child nodes (for directories)
+	GenerateOnce   bool        // If true, the file will only be generated once
+	ShouldGenerate func() bool // Function to determine if this node should be generated
+}
+
+// MicroserviceTemplateTree defines the directory and file structure for a microservice project
+var MicroserviceTemplateTree = &Node{
+	Name: "",
+	Children: []*Node{
+		{
+			Name:     "main.go",
+			Template: "templates/microservice/main.tpl",
+			// GenerateOnce: true,
+		},
+		{
+			Name: "server",
+			Children: []*Node{
+				{
+					Name:     "controller.go",
+					Template: "templates/microservice/server/controller.tpl",
+					// GenerateOnce: true,
+				},
+				{
+					Name:     "startup.go",
+					Template: "templates/microservice/server/startup.tpl",
+					// GenerateOnce: true,
+				},
+				{
+					Name: "generated",
+					Children: []*Node{
+						{
+							Name:     "server.go",
+							Template: "templates/microservice/server/generated/server.tpl",
+						},
+					},
+				},
+			},
+		},
+	},
+}

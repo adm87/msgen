@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"embed"
 	"text/template"
+
+	"github.com/adm87/msgen/utils"
 )
 
 //go:embed templates
@@ -49,4 +51,14 @@ func RenderTemplate(name, templatePath string, data any) (string, error) {
 	}
 
 	return outputBuffer.String(), nil
+}
+
+func RenderTemplateToFile(templatePath, outputPath string, data any) error {
+	renderedContent, err := RenderTemplate(outputPath, templatePath, data)
+
+	if err != nil {
+		return err
+	}
+
+	return utils.WriteFile(outputPath, renderedContent)
 }
