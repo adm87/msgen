@@ -6,7 +6,7 @@ import (
 )
 
 func Command(msgenConfig *models.MSGenConfig, msgenArgs *models.MSGenArgs) *cobra.Command {
-	c := &cobra.Command{
+	return &cobra.Command{
 		Use:   "update",
 		Short: "Update an existing microservice project",
 		Long:  `This command updates an existing microservice project based on changes in the service specification interface.`,
@@ -14,7 +14,4 @@ func Command(msgenConfig *models.MSGenConfig, msgenArgs *models.MSGenArgs) *cobr
 			return cmd.Help()
 		},
 	}
-
-	c.MarkFlagRequired(msgenArgs.SpecFile.Name)
-	return c
 }
