@@ -6,8 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/adm87/msgen/cmd/create"
+	"github.com/adm87/msgen/cmd/update"
 	"github.com/adm87/msgen/models"
-	"github.com/adm87/msgen/msgen"
 	"github.com/adm87/msgen/utils"
 	"github.com/spf13/cobra"
 )
@@ -19,33 +20,27 @@ var (
 // MSGen creates the msgen command, validates flags and runs the generator
 func MSGen(version string) (*cobra.Command, error) {
 	config := models.DefaultMSGenConfig()
-
-	var (
-		workingDir string
-		outputDir  string
-		specFile   string
-	)
+	cmdArgs := models.MSGenArgs{}
 
 	c := &cobra.Command{
 		Use:     "msgen",
 		Short:   "Microservice code generator",
 		Long:    `MSGen is a tool to generate boilerplate code for microservices.`,
 		Version: version,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			wrkDir, err := filepath.Abs(workingDir)
-
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			wrkDir, err := filepath.Abs(cmdArgs.WorkingDir)
 			if err != nil {
 				return err
 			}
+			cmdArgs.WorkingDir = wrkDir
 
-			outDir, err := filepath.Abs(outputDir)
-
+			outDir, err := filepath.Abs(cmdArgs.OutDir)
 			if err != nil {
 				return err
 			}
+			cmdArgs.OutDir = outDir
 
 			configFile := filepath.Join(wrkDir, models.MSConfigFileName)
-
 			if utils.FileExists(configFile) {
 				loadedConfig, err := loadMSConfig(configFile)
 
@@ -56,21 +51,28 @@ func MSGen(version string) (*cobra.Command, error) {
 				config = loadedConfig
 			}
 
-			specFile = filepath.Join(wrkDir, specFile)
-
-			if !utils.FileExists(specFile) {
+			cmdArgs.SpecFile = filepath.Join(wrkDir, cmdArgs.SpecFile)
+			if !utils.FileExists(cmdArgs.SpecFile) {
 				return ErrMissingSpecFile
 			}
 
-			return msgen.Generate(config, specFile, outDir)
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
 
-	c.PersistentFlags().StringVarP(&workingDir, "workdir", "w", ".", "Working directory for the microservice")
-	c.PersistentFlags().StringVarP(&outputDir, "output", "o", "./output", "Output directory for the generated code")
-	c.PersistentFlags().StringVarP(&specFile, "spec", "s", "", "Path to the specification file relative to the working directory")
+	c.AddCommand(
+		create.Command(&config, &cmdArgs),
+		update.Command(&config, &cmdArgs),
+	)
+
+	c.PersistentFlags().StringVarP(&cmdArgs.WorkingDir, "workdir", "w", ".", "Working directory for the microservice")
+	c.PersistentFlags().StringVarP(&cmdArgs.OutDir, "output", "o", "./output", "Output directory for the generated code")
+	c.PersistentFlags().StringVarP(&cmdArgs.SpecFile, "spec", "s", "", "Path to the specification file relative to the working directory")
 
 	if err := c.MarkPersistentFlagRequired("spec"); err != nil {
 		return nil, err
