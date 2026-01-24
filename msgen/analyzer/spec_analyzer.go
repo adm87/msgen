@@ -71,11 +71,13 @@ func parseTypeSpec(genDecl *ast.GenDecl, serviceInfo *models.ServiceInfo) error 
 	}
 
 	typeSpec, ok := genDecl.Specs[0].(*ast.TypeSpec)
+
 	if !ok {
 		return ErrInvalidSpecType
 	}
 
 	interfaceType, ok := typeSpec.Type.(*ast.InterfaceType)
+
 	if !ok {
 		return ErrInvalidSpecType
 	}

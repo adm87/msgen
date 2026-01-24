@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/adm87/msgen/cmd"
+	"github.com/adm87/msgen/log"
 )
 
 var version = "0.0.0-unreleased"
@@ -21,6 +22,6 @@ func main() {
 }
 
 func exit(code int, msg string) {
-	println(msg)
+	log.Error(msg)
 	os.Exit(code)
 }

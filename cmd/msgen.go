@@ -28,32 +28,40 @@ func MSGen(version string) (*cobra.Command, error) {
 		Long:    `MSGen is a tool to generate boilerplate code for microservices.`,
 		Version: version,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			wrkDir, err := filepath.Abs(cmdArgs.WorkingDir.Value)
+			var err error
+
+			cmdArgs.WorkingDir.Value, err = filepath.Abs(cmdArgs.WorkingDir.Value)
+
 			if err != nil {
 				return err
 			}
-			cmdArgs.WorkingDir.Value = wrkDir
 
-			outDir, err := filepath.Abs(cmdArgs.OutDir.Value)
+			cmdArgs.OutDir.Value, err = filepath.Abs(cmdArgs.OutDir.Value)
+
 			if err != nil {
 				return err
 			}
-			cmdArgs.OutDir.Value = outDir
 
-			configFile := filepath.Join(wrkDir, models.MSConfigFileName)
-			if utils.FileExists(configFile) {
+			configFile := filepath.Join(cmdArgs.WorkingDir.Value, models.MSConfigFileName)
+			fileExists, err := utils.FileExists(configFile)
+
+			if err != nil {
+				return err
+			}
+
+			if fileExists {
 				loadedConfig, err := loadMSConfig(configFile)
-
 				if err != nil {
 					return err
 				}
-
 				config = loadedConfig
 			}
 
-			cmdArgs.SpecFile.Value = filepath.Join(wrkDir, cmdArgs.SpecFile.Value)
-			if !utils.FileExists(cmdArgs.SpecFile.Value) {
-				return ErrMissingSpecFile
+			cmdArgs.SpecFile.Value = filepath.Join(cmdArgs.WorkingDir.Value, cmdArgs.SpecFile.Value)
+			fileExists, err = utils.FileExists(cmdArgs.SpecFile.Value)
+
+			if !fileExists {
+				return errors.Join(ErrMissingSpecFile, err)
 			}
 
 			return nil
