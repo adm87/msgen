@@ -65,29 +65,21 @@ func MSGen(version string) (*cobra.Command, error) {
 		SilenceUsage:  true,
 	}
 
-	addPersistentStringFlags(c, &cmdArgs.WorkingDir)
+	utils.AddPersistentStringFlags(c, &cmdArgs.WorkingDir)
 
 	createCmd := create.Command(&config, &cmdArgs)
-	addStringFlag(createCmd, &cmdArgs.SpecFile)
-	addStringFlag(createCmd, &cmdArgs.OutDir)
+	utils.AddStringFlag(createCmd, &cmdArgs.SpecFile)
+	utils.AddStringFlag(createCmd, &cmdArgs.OutDir)
 	createCmd.MarkFlagRequired(cmdArgs.SpecFile.Name)
 
 	updateCmd := update.Command(&config, &cmdArgs)
-	addStringFlag(updateCmd, &cmdArgs.SpecFile)
-	addStringFlag(updateCmd, &cmdArgs.OutDir)
+	utils.AddStringFlag(updateCmd, &cmdArgs.SpecFile)
+	utils.AddStringFlag(updateCmd, &cmdArgs.OutDir)
 	updateCmd.MarkFlagRequired(cmdArgs.SpecFile.Name)
 
 	c.AddCommand(createCmd, updateCmd)
 
 	return c, nil
-}
-
-func addPersistentStringFlags(cmd *cobra.Command, arg *models.StringArg) {
-	cmd.PersistentFlags().StringVarP(&arg.Value, arg.Name, arg.Short, arg.Value, arg.Description)
-}
-
-func addStringFlag(cmd *cobra.Command, arg *models.StringArg) {
-	cmd.Flags().StringVarP(&arg.Value, arg.Name, arg.Short, arg.Value, arg.Description)
 }
 
 func loadMSConfig(path string) (models.MSGenConfig, error) {

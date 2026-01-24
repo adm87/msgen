@@ -20,3 +20,13 @@ func DefaultMSGenArgs() MSGenArgs {
 		WorkingDir: StringArg{Name: "workdir", Short: "w", Value: ".", Description: "msgen's working directory"},
 	}
 }
+
+type CreateArgs struct {
+	ModuleUrl StringArg
+}
+
+func DefaultCreateArgs() CreateArgs {
+	return CreateArgs{
+		ModuleUrl: StringArg{Name: "module", Short: "m", Value: "", Description: "Go module URL for the new microservice project"},
+	}
+}
