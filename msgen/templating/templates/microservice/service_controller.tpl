@@ -2,7 +2,7 @@
 package server
 
 import (
-    {{- include "import.statements" .Imports -}}
+    {{ template "import.statements" .Imports }}
 )
 
 // {{ .Name }}Controller handles requests for the {{ .Name }} service.
@@ -15,7 +15,7 @@ func New{{ .Name }}Controller() *{{ .Name }}Controller {
 
 {{- range .Methods }}
 
-func (c *{{ $.Name }}Controller) {{ .Name }}({{- include "method.signature.parameters" .Parameters -}}) {{- include "method.signature.returns" .Returns -}} {
+func (c *{{ $.Name }}Controller) {{ .Name }}({{ template "method.signature.parameters" .Parameters }}) {{ template "method.signature.returns" .Returns }} {
     panic("not implemented")
 }
 {{- end }}

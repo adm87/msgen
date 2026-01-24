@@ -36,25 +36,7 @@ func RenderTemplate(name, templatePath string, data any) (string, error) {
 		return "", err
 	}
 
-	t := template.New(name).Funcs(templatingFuncs)
-	t = t.Funcs(template.FuncMap{
-		"include": func(n string, d any) (string, error) {
-			buf := new(bytes.Buffer)
-			tpl := t.Lookup(n)
-
-			if tpl == nil {
-				return "", nil
-			}
-
-			if err := tpl.Execute(buf, d); err != nil {
-				return "", err
-			}
-
-			return buf.String(), nil
-		},
-	})
-
-	t, err = t.Parse(helpersTmpl + tmpl)
+	t, err := template.New(name).Funcs(templatingFuncs).Parse(helpersTmpl + tmpl)
 
 	if err != nil {
 		return "", err
