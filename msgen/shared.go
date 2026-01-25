@@ -9,6 +9,7 @@ import (
 	"github.com/adm87/msgen/models"
 	"github.com/adm87/msgen/msgen/analyzer"
 	"github.com/adm87/msgen/msgen/templating"
+	"github.com/adm87/msgen/utils"
 )
 
 // Context holds the context information needed during code generation.
@@ -72,7 +73,7 @@ func generateFiles(ctx *Context, node *templating.Node, currentPath string) erro
 		childPath := filepath.Join(currentPath, child.Name)
 
 		if child.Template == "" {
-			if err := os.MkdirAll(childPath, os.ModePerm); err != nil {
+			if err := utils.MakeDirectory(childPath); err != nil {
 				return err
 			}
 

@@ -16,7 +16,7 @@ func main() {
 		exit(1, err.Error())
 	}
 
-	if err := c.Execute(); err != nil {
+	if err = c.Execute(); err != nil {
 		exit(1, err.Error())
 	}
 }

@@ -20,6 +20,7 @@ func Create(msgenConfig *models.MSGenConfig, moduleUrl, specFile, outDir string)
 		if err := initGoModule(moduleUrl, outDir); err != nil {
 			return err
 		}
+
 		if err := goGetChi(outDir); err != nil {
 			return err
 		}

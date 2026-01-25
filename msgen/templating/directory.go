@@ -1,5 +1,6 @@
 package templating
 
+// Node represents a file or directory in the template tree.
 type Node struct {
 	Name           string      // File or Directory name
 	Template       string      // Template path to use to generate this file (empty for directories)

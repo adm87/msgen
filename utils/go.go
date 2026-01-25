@@ -1,42 +1,58 @@
 package utils
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 )
 
-func ValidateModuleUrl(moduleUrl string) bool {
+var (
+	ErrMustNotBeEmpty     = errors.New("value must not be empty")
+	ErrMustBeLowercase    = errors.New("value must be lowercase")
+	ErrInvalidModulePath  = errors.New("value contains invalid characters for a module path")
+	ErrMustContainDot     = errors.New("module path must contain at least one dot (.)")
+	ErrContainsInvalidSeq = errors.New("module path contains invalid sequences")
+)
+
+func ValidateModuleUrl(moduleUrl string) error {
 	if moduleUrl == "" {
-		return false
+		return ErrMustNotBeEmpty
 	}
 
 	if strings.ToLower(moduleUrl) != moduleUrl {
-		return false
+		return ErrMustBeLowercase
 	}
 
 	modulePathPattern := `^[a-z0-9][a-z0-9\-_.~/]*[a-z0-9]$`
 	matched, err := regexp.MatchString(modulePathPattern, moduleUrl)
 
 	if err != nil || !matched {
-		return false
+		return ErrInvalidModulePath
 	}
 
 	if !strings.Contains(moduleUrl, ".") {
-		return false
+		return ErrMustContainDot
 	}
 
 	invalidSequences := []string{"//", "..", ".-", "-.", "/_", "_/"}
 
 	for _, seq := range invalidSequences {
 		if strings.Contains(moduleUrl, seq) {
-			return false
+			return ErrContainsInvalidSeq
 		}
 	}
 
-	return true
+	return nil
 }
 
 func IsGoModule(path string) (bool, error) {
-	return FileExists(filepath.Join(path, "go.mod"))
+	exists, err := FileExists(filepath.Join(path, "go.mod"))
+
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return false, err
+	}
+
+	return exists, nil
 }

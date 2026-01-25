@@ -43,25 +43,25 @@ func MSGen(version string) (*cobra.Command, error) {
 			}
 
 			configFile := filepath.Join(cmdArgs.WorkingDir.Value, models.MSConfigFileName)
-			fileExists, err := utils.FileExists(configFile)
 
-			if err != nil {
+			if exists, err := utils.FileExists(configFile); err != nil {
 				return err
-			}
+			} else if exists {
+				loaded, err := loadMSConfig(configFile)
 
-			if fileExists {
-				loadedConfig, err := loadMSConfig(configFile)
 				if err != nil {
 					return err
 				}
-				config = loadedConfig
+
+				config = loaded
 			}
 
 			cmdArgs.SpecFile.Value = filepath.Join(cmdArgs.WorkingDir.Value, cmdArgs.SpecFile.Value)
-			fileExists, err = utils.FileExists(cmdArgs.SpecFile.Value)
 
-			if !fileExists {
-				return errors.Join(ErrMissingSpecFile, err)
+			if exists, err := utils.FileExists(cmdArgs.SpecFile.Value); err != nil {
+				return err
+			} else if !exists {
+				return ErrMissingSpecFile
 			}
 
 			return nil

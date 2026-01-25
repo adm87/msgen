@@ -88,6 +88,7 @@ func parseTypeSpec(genDecl *ast.GenDecl, serviceInfo *models.ServiceInfo) error 
 
 	for _, method := range interfaceType.Methods.List {
 		funcType, ok := method.Type.(*ast.FuncType)
+
 		if !ok {
 			return ErrEmbeddedInterfaces
 		}
