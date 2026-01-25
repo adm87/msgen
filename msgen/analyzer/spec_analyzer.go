@@ -20,8 +20,8 @@ var (
 
 // SpecAnalyzer implements the ast.Visitor interface for analyzing service specifications.
 type SpecAnalyzer struct {
-	serviceInfo *models.ServiceInfo // Analyzed service information
-	err         error               // Error encountered during analysis
+	Spec *models.Spec // Analyzed service information
+	err  error        // Error encountered during analysis
 }
 
 func (sa *SpecAnalyzer) Visit(node ast.Node) ast.Visitor {
@@ -34,17 +34,17 @@ func (sa *SpecAnalyzer) Visit(node ast.Node) ast.Visitor {
 
 		switch n.Tok {
 		case token.IMPORT:
-			sa.err = parseImports(n, sa.serviceInfo)
+			sa.err = parseImports(n, sa.Spec)
 
 		case token.TYPE:
-			sa.err = parseTypeSpec(n, sa.serviceInfo)
+			sa.err = parseTypeSpec(n, sa.Spec)
 		}
 	}
 
 	return sa
 }
 
-func parseImports(genDecl *ast.GenDecl, serviceInfo *models.ServiceInfo) error {
+func parseImports(genDecl *ast.GenDecl, Spec *models.Spec) error {
 	for _, spec := range genDecl.Specs {
 		importSpec := spec.(*ast.ImportSpec)
 
@@ -56,7 +56,7 @@ func parseImports(genDecl *ast.GenDecl, serviceInfo *models.ServiceInfo) error {
 			alias = importSpec.Name.Name
 		}
 
-		serviceInfo.Imports = append(serviceInfo.Imports, models.SpecImport{
+		Spec.Imports = append(Spec.Imports, models.SpecImport{
 			Path:  importPath,
 			Alias: alias,
 		})
@@ -65,7 +65,7 @@ func parseImports(genDecl *ast.GenDecl, serviceInfo *models.ServiceInfo) error {
 	return nil
 }
 
-func parseTypeSpec(genDecl *ast.GenDecl, serviceInfo *models.ServiceInfo) error {
+func parseTypeSpec(genDecl *ast.GenDecl, Spec *models.Spec) error {
 	if len(genDecl.Specs) != 1 {
 		return ErrInvalidTypeSpecCount
 	}
@@ -103,10 +103,10 @@ func parseTypeSpec(genDecl *ast.GenDecl, serviceInfo *models.ServiceInfo) error 
 			Returns:    parseFieldList(funcType.Results),
 		}
 
-		serviceInfo.Methods = append(serviceInfo.Methods, specMethod)
+		Spec.Methods = append(Spec.Methods, specMethod)
 	}
 
-	serviceInfo.Name = typeSpec.Name.Name
+	Spec.Name = typeSpec.Name.Name
 	return nil
 }
 
@@ -162,8 +162,8 @@ func formatSelectorType(expr *ast.SelectorExpr, prefix string) string {
 	return prefix + expr.Sel.Name
 }
 
-// AnalyzeSpec analyzes the service specification file and returns ServiceInfo.
-func AnalyzeSpec(specFile string) (*models.ServiceInfo, error) {
+// AnalyzeSpec analyzes the service specification file and returns Spec.
+func AnalyzeSpec(specFile string) (*models.Spec, error) {
 	scr, err := os.ReadFile(specFile)
 
 	if err != nil {
@@ -177,7 +177,7 @@ func AnalyzeSpec(specFile string) (*models.ServiceInfo, error) {
 	}
 
 	visitor := &SpecAnalyzer{
-		serviceInfo: &models.ServiceInfo{
+		Spec: &models.Spec{
 			Package: file.Name.Name,
 			Imports: make([]models.SpecImport, 0),
 			Methods: make([]models.SpecMethod, 0),
@@ -186,5 +186,5 @@ func AnalyzeSpec(specFile string) (*models.ServiceInfo, error) {
 
 	ast.Walk(visitor, file)
 
-	return visitor.serviceInfo, visitor.err
+	return visitor.Spec, visitor.err
 }

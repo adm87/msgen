@@ -2,32 +2,32 @@
 package server
 
 import (
-    {{ template "import.statements" .ServiceInfo.Imports }}
+    {{ template "import.statements" .Spec.Imports }}
 )
 
-type {{ .ServiceInfo.Name }}Controller struct {
+type {{ .Spec.Name }}Controller struct {
     // Add fields as necessary
 }
 
-func New{{ .ServiceInfo.Name }}Controller() *{{ .ServiceInfo.Name }}Controller {
-    return &{{ .ServiceInfo.Name }}Controller{
+func New{{ .Spec.Name }}Controller() *{{ .Spec.Name }}Controller {
+    return &{{ .Spec.Name }}Controller{
         // Initialize fields as necessary
     }
 }
 
-func (c *{{ .ServiceInfo.Name }}Controller) Startup() error {
+func (c *{{ .Spec.Name }}Controller) Startup() error {
     // Implement startup logic here
     return nil
 }
 
-func (c *{{ .ServiceInfo.Name }}Controller) Shutdown() error {
+func (c *{{ .Spec.Name }}Controller) Shutdown() error {
     // Implement shutdown logic here
     return nil
 }
 
-{{- range .ServiceInfo.Methods }}
+{{- range .Spec.Methods }}
 
-func (c *{{ $.ServiceInfo.Name }}Controller) {{ .Name }}({{ template "method.parameters" .Parameters }}) {{ template "method.returns" .Returns }} {
+func (c *{{ $.Spec.Name }}Controller) {{ .Name }}({{ template "method.parameters" .Parameters }}) {{ template "method.returns" .Returns }} {
     panic("not implemented")
 }
 {{- end }}

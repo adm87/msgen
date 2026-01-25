@@ -1,9 +1,10 @@
 package models
 
-// ServiceInfo holds analyzed information about the service specification.
-type ServiceInfo struct {
+// Spec holds analyzed information about the service specification.
+type Spec struct {
 	Name    string       // Service name; name of the interface, e.g., "ExampleService"
 	Package string       // Package name of the spec file
+	Path    string       // Path to the spec file
 	Imports []SpecImport // Slice of imports used in the spec file
 	Methods []SpecMethod // Slice of methods defined in the service specification
 }

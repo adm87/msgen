@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-    s := generated.NewServer(server.New{{ .ServiceInfo.Name }}Controller())
+    s := generated.NewServer(server.New{{ .Spec.Name }}Controller())
 
     if err := s.Start(); err != nil {
         panic(err)

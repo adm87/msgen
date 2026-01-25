@@ -1,10 +1,10 @@
 {{- template "disclaimer.go.noedit" }}
 package generated
 
-{{- $spec := printf "%s.%s" .ServiceInfo.Package .ServiceInfo.Name }}
+{{- $spec := printf "%s.%s" .Spec.Package .Spec.Name }}
 
 import (
-    "{{ .MSGenConfig.ModuleUrl }}{{ .SpecPath }}"
+    "{{ .MSGenConfig.ModuleUrl }}{{ .Spec.Path }}"
 )
 
 // ServerController defines a controller to handle server operations.

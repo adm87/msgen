@@ -16,8 +16,7 @@ import (
 // Context holds the context information needed during code generation.
 type Context struct {
 	MSGenConfig *models.MSGenConfig
-	ServiceInfo *models.ServiceInfo
-	SpecPath    string
+	Spec        *models.Spec
 }
 
 // Generate generates the microservice code based on the provided specification.
@@ -30,7 +29,7 @@ func Generate(msgenConfig *models.MSGenConfig, specFile string, workingDir strin
 		return err
 	}
 
-	serviceInfo, err := analyzer.AnalyzeSpec(filepath.Join(workingDir, specFile))
+	Spec, err := analyzer.AnalyzeSpec(filepath.Join(workingDir, specFile))
 
 	if err != nil {
 		return err
@@ -38,9 +37,10 @@ func Generate(msgenConfig *models.MSGenConfig, specFile string, workingDir strin
 
 	ctx := &Context{
 		MSGenConfig: msgenConfig,
-		ServiceInfo: serviceInfo,
-		SpecPath:    filepath.Dir(specFile),
+		Spec:        Spec,
 	}
+
+	ctx.Spec.Path = filepath.Dir(specFile)
 
 	if err := generateFiles(ctx, templating.MicroserviceTemplateTree, workingDir); err != nil {
 		return err
