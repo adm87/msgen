@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	ErrInvalidParamAttr    = errors.New("invalid parameter attribute, // @Param <name> <type> <in> <required>")
-	ErrInvalidResponseAttr = errors.New("invalid response attribute, // @Success <code> <type> <dataType>")
-	ErrInvalidRouterAttr   = errors.New("invalid router attribute, // @Router <path> [<method>]")
+	ErrInvalidParamAttr    = errors.New("invalid parameter attribute, expected // @Param <name> <type> <in> <required>")
+	ErrInvalidResponseAttr = errors.New("invalid response attribute, expected // @Success <code> <type> <dataType>")
+	ErrInvalidRouterAttr   = errors.New("invalid router attribute, expected // @Router <path> [<method>]")
 )
 
 func parseParamAttr(attrStr string) (models.SpecMethodParamAttribute, error) {

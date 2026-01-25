@@ -2,10 +2,12 @@ package analyzer
 
 import (
 	"errors"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/adm87/msgen/models"
@@ -104,8 +106,14 @@ func parseTypeSpec(genDecl *ast.GenDecl, Spec *models.Spec) error {
 		methodAttrs, err := parseMethodAttributes(collectAttributes(method.Doc))
 
 		if err != nil {
-			return err
+			return errors.Join(fmt.Errorf("error while parsing method %s", method.Names[0].Name), err)
 		}
+
+		if methodAttrs.Version != "" && methodAttrs.Version[0] != 'v' {
+			methodAttrs.Version = "/v" + methodAttrs.Version
+		}
+
+		methodAttrs.Router.Path = path.Join(methodAttrs.Version, methodAttrs.Router.Path)
 
 		specMethod := models.SpecMethod{
 			Name:       method.Names[0].Name,
@@ -210,7 +218,7 @@ func parseMethodAttributes(attributes map[string][]string) (*models.SpecMethodAt
 		attr, err := parseResponseAttr(successAttrs[0])
 
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(fmt.Errorf("error while parsing %s", models.SuccessAttr), err)
 		}
 
 		methodAttrs.Success = attr
@@ -221,7 +229,7 @@ func parseMethodAttributes(attributes map[string][]string) (*models.SpecMethodAt
 			attr, err := parseResponseAttr(failureAttr)
 
 			if err != nil {
-				return nil, err
+				return nil, errors.Join(fmt.Errorf("error while parsing %s", models.FailureAttr), err)
 			}
 
 			methodAttrs.Failures = append(methodAttrs.Failures, attr)
@@ -233,7 +241,7 @@ func parseMethodAttributes(attributes map[string][]string) (*models.SpecMethodAt
 			attr, err := parseParamAttr(paramAttr)
 
 			if err != nil {
-				return nil, err
+				return nil, errors.Join(fmt.Errorf("error while parsing %s", models.ParamAttr), err)
 			}
 
 			methodAttrs.Parameters = append(methodAttrs.Parameters, attr)
@@ -244,7 +252,7 @@ func parseMethodAttributes(attributes map[string][]string) (*models.SpecMethodAt
 		attr, err := parseRouterAttr(routerAttrs[0])
 
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(fmt.Errorf("error while parsing %s", models.RouterAttr), err)
 		}
 
 		methodAttrs.Router = attr

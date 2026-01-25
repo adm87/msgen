@@ -78,7 +78,14 @@ type SpecMethodResponseAttribute struct {
 	DataType string // Data type of the response
 }
 
+// SpecMethodRouterAttribute represents routing attributes of a method.
 type SpecMethodRouterAttribute struct {
 	Path   string // Route path
 	Method string // HTTP method (GET, POST, etc.)
+}
+
+// SpecRoutingNode represents a node in the routing tree.
+type SpecRoutingNode struct {
+	Methods  []SpecMethod                // Methods associated with this node
+	Children map[string]*SpecRoutingNode // Child nodes in the routing tree
 }

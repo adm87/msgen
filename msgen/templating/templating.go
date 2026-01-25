@@ -3,8 +3,10 @@ package templating
 import (
 	"bytes"
 	"embed"
+	"strings"
 	"text/template"
 
+	"github.com/adm87/msgen/models"
 	"github.com/adm87/msgen/utils"
 )
 
@@ -22,7 +24,7 @@ func loadTemplate(templatePath string) (string, error) {
 }
 
 var templatingFuncs = template.FuncMap{
-	// Add custom template functions here if needed
+	"buildRoutingTree": buildRoutingTree,
 }
 
 func RenderTemplate(name, templatePath string, data any) (string, error) {
@@ -61,4 +63,38 @@ func RenderTemplateToFile(templatePath, outputPath string, data any) error {
 	}
 
 	return utils.WriteFile(outputPath, renderedContent)
+}
+
+func buildRoutingTree(methods []models.SpecMethod) *models.SpecRoutingNode {
+	root := &models.SpecRoutingNode{
+		Children: make(map[string]*models.SpecRoutingNode),
+	}
+
+	for _, method := range methods {
+		if method.Attributes == nil || method.Attributes.Router.Path == "" {
+			continue
+		}
+
+		parts := strings.Split(method.Attributes.Router.Path[1:], "/")
+		insertMethodIntoRoutingTree(root, parts, method)
+	}
+
+	return root
+}
+
+func insertMethodIntoRoutingTree(node *models.SpecRoutingNode, parts []string, method models.SpecMethod) {
+	if len(parts) == 0 {
+		node.Methods = append(node.Methods, method)
+		return
+	}
+
+	part := parts[0]
+
+	if _, exists := node.Children[part]; !exists {
+		node.Children[part] = &models.SpecRoutingNode{
+			Children: make(map[string]*models.SpecRoutingNode),
+		}
+	}
+
+	insertMethodIntoRoutingTree(node.Children[part], parts[1:], method)
 }
