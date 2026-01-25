@@ -6,6 +6,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"strings"
 
 	"github.com/adm87/msgen/models"
 )
@@ -86,6 +87,9 @@ func parseTypeSpec(genDecl *ast.GenDecl, Spec *models.Spec) error {
 		return ErrSpecMissingMethods
 	}
 
+	Spec.Name = typeSpec.Name.Name
+	Spec.Attributes = parseSpecAttributes(collectAttributes(genDecl.Doc))
+
 	for _, method := range interfaceType.Methods.List {
 		funcType, ok := method.Type.(*ast.FuncType)
 
@@ -99,6 +103,7 @@ func parseTypeSpec(genDecl *ast.GenDecl, Spec *models.Spec) error {
 
 		specMethod := models.SpecMethod{
 			Name:       method.Names[0].Name,
+			Attributes: parseMethodAttributes(collectAttributes(method.Doc)),
 			Parameters: parseFieldList(funcType.Params),
 			Returns:    parseFieldList(funcType.Results),
 		}
@@ -106,7 +111,6 @@ func parseTypeSpec(genDecl *ast.GenDecl, Spec *models.Spec) error {
 		Spec.Methods = append(Spec.Methods, specMethod)
 	}
 
-	Spec.Name = typeSpec.Name.Name
 	return nil
 }
 
@@ -155,11 +159,108 @@ func parseFieldList(fieldList *ast.FieldList) []models.SpecField {
 	return params
 }
 
+func parseSpecAttributes(attributes map[string][]string) *models.SpecAttributes {
+	specAttrs := &models.SpecAttributes{}
+
+	if summary, exists := attributes[models.SummaryAttr]; exists && len(summary) > 0 {
+		specAttrs.Summary = summary[0]
+	}
+
+	if description, exists := attributes[models.DescriptionAttr]; exists && len(description) > 0 {
+		specAttrs.Description = description[0]
+	}
+
+	return specAttrs
+}
+
+func parseMethodAttributes(attributes map[string][]string) *models.SpecMethodAttributes {
+	methodAttrs := &models.SpecMethodAttributes{}
+
+	if summary, exists := attributes[models.SummaryAttr]; exists && len(summary) > 0 {
+		methodAttrs.Summary = summary[0]
+	}
+
+	if description, exists := attributes[models.DescriptionAttr]; exists && len(description) > 0 {
+		methodAttrs.Description = description[0]
+	}
+
+	if version, exists := attributes[models.VersionAttr]; exists && len(version) > 0 {
+		methodAttrs.Version = version[0]
+	}
+
+	if accepts, exists := attributes[models.AcceptsAttr]; exists && len(accepts) > 0 {
+		methodAttrs.Accepts = accepts[0]
+	}
+
+	if returns, exists := attributes[models.ReturnsAttr]; exists && len(returns) > 0 {
+		methodAttrs.Returns = returns[0]
+	}
+
+	if tags, exists := attributes[models.TagsAttr]; exists && len(tags) > 0 {
+		methodAttrs.Tags = strings.Split(tags[0], " ")
+	}
+
+	if successAttrs, exists := attributes[models.SuccessAttr]; exists && len(successAttrs) > 0 {
+		methodAttrs.Success = parseResponseAttr(successAttrs[0])
+	}
+
+	if failureAttrs, exists := attributes[models.FailureAttr]; exists && len(failureAttrs) > 0 {
+		for _, failureAttr := range failureAttrs {
+			methodAttrs.Failures = append(methodAttrs.Failures, parseResponseAttr(failureAttr))
+		}
+	}
+
+	if paramAttrs, exists := attributes[models.ParamAttr]; exists && len(paramAttrs) > 0 {
+		for _, paramAttr := range paramAttrs {
+			methodAttrs.Parameters = append(methodAttrs.Parameters, parseParamAttr(paramAttr))
+		}
+	}
+
+	if routerAttrs, exists := attributes[models.RouterAttr]; exists && len(routerAttrs) > 0 {
+		methodAttrs.Router = parseRouterAttr(routerAttrs[0])
+	}
+
+	return methodAttrs
+}
+
 func formatSelectorType(expr *ast.SelectorExpr, prefix string) string {
 	if xIdent, ok := expr.X.(*ast.Ident); ok {
 		return prefix + xIdent.Name + "." + expr.Sel.Name
 	}
 	return prefix + expr.Sel.Name
+}
+
+func collectAttributes(commentGroup *ast.CommentGroup) map[string][]string {
+	attributes := make(map[string][]string)
+
+	if commentGroup == nil {
+		return attributes
+	}
+
+	for _, comment := range commentGroup.List {
+		if len(comment.Text) > 2 && comment.Text[:2] == "//" {
+			text := comment.Text[2:]
+
+			if len(text) > 1 && text[0] == ' ' {
+				text = text[1:]
+			}
+
+			if len(text) > 0 && text[0] == '@' {
+				parts := strings.SplitN(text[1:], " ", 2)
+
+				key := parts[0]
+				value := ""
+
+				if len(parts) > 1 {
+					value = parts[1]
+				}
+
+				attributes[key] = append(attributes[key], value)
+			}
+		}
+	}
+
+	return attributes
 }
 
 // AnalyzeSpec analyzes the service specification file and returns Spec.
