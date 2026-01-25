@@ -17,19 +17,20 @@ import (
 type Context struct {
 	MSGenConfig *models.MSGenConfig
 	ServiceInfo *models.ServiceInfo
+	SpecPath    string
 }
 
 // Generate generates the microservice code based on the provided specification.
-func Generate(msgenConfig *models.MSGenConfig, specFile string, outDir string) error {
-	if err := validateModUrl(msgenConfig, outDir); err != nil {
+func Generate(msgenConfig *models.MSGenConfig, specFile string, workingDir string) error {
+	if err := validateModUrl(msgenConfig, workingDir); err != nil {
 		return err
 	}
 
-	if err := removeGeneratedDirectories(outDir); err != nil {
+	if err := removeGeneratedDirectories(workingDir); err != nil {
 		return err
 	}
 
-	serviceInfo, err := analyzer.AnalyzeSpec(specFile)
+	serviceInfo, err := analyzer.AnalyzeSpec(filepath.Join(workingDir, specFile))
 
 	if err != nil {
 		return err
@@ -38,29 +39,30 @@ func Generate(msgenConfig *models.MSGenConfig, specFile string, outDir string) e
 	ctx := &Context{
 		MSGenConfig: msgenConfig,
 		ServiceInfo: serviceInfo,
+		SpecPath:    filepath.Dir(specFile),
 	}
 
-	if err := generateFiles(ctx, templating.MicroserviceTemplateTree, outDir); err != nil {
+	if err := generateFiles(ctx, templating.MicroserviceTemplateTree, workingDir); err != nil {
 		return err
 	}
 
-	if err := writeMSGenConfig(ctx, outDir); err != nil {
+	if err := writeMSGenConfig(ctx, workingDir); err != nil {
 		return err
 	}
 
-	if err := utils.GoFmt(outDir); err != nil {
+	if err := utils.GoFmt(workingDir); err != nil {
 		return err
 	}
 
-	if err := utils.ModTidy(outDir); err != nil {
+	if err := utils.ModTidy(workingDir); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateModUrl(msgenConfig *models.MSGenConfig, outDir string) error {
-	modUrl, err := utils.GetModuleUrl(outDir)
+func validateModUrl(msgenConfig *models.MSGenConfig, path string) error {
+	modUrl, err := utils.GetModuleUrl(path)
 
 	if err != nil {
 		return err
@@ -75,8 +77,8 @@ func validateModUrl(msgenConfig *models.MSGenConfig, outDir string) error {
 	return nil
 }
 
-func removeGeneratedDirectories(outDir string) error {
-	return filepath.Walk(outDir, func(path string, info fs.FileInfo, err error) error {
+func removeGeneratedDirectories(path string) error {
+	return filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -137,8 +139,8 @@ func generateFiles(ctx *Context, node *templating.Node, currentPath string) erro
 	return nil
 }
 
-func writeMSGenConfig(ctx *Context, outDir string) error {
-	configPath := filepath.Join(outDir, models.MSConfigFileName)
+func writeMSGenConfig(ctx *Context, path string) error {
+	configPath := filepath.Join(path, models.MSConfigFileName)
 
 	log.Info("Writing msgen config file:", "path", configPath)
 

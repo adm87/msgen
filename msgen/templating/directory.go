@@ -14,17 +14,17 @@ var MicroserviceTemplateTree = &Node{
 	Name: "",
 	Children: []*Node{
 		{
-			Name:     "main.go",
-			Template: "templates/microservice/main.tpl",
-			// GenerateOnce: true,
+			Name:         "main.go",
+			Template:     "templates/microservice/main.tpl",
+			GenerateOnce: true,
 		},
 		{
 			Name: "server",
 			Children: []*Node{
 				{
-					Name:     "controller.go",
-					Template: "templates/microservice/server/controller.tpl",
-					// GenerateOnce: true,
+					Name:         "controller.go",
+					Template:     "templates/microservice/server/controller.tpl",
+					GenerateOnce: true,
 				},
 				{
 					Name: "generated",

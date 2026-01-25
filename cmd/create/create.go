@@ -18,7 +18,7 @@ func Command(msgenConfig *models.MSGenConfig, msgenArgs *models.MSGenArgs) *cobr
 			if err := utils.ValidateModuleUrl(cmdArgs.ModuleUrl.Value); err != nil {
 				return err
 			}
-			return msgen.Create(msgenConfig, cmdArgs.ModuleUrl.Value, msgenArgs.SpecFile.Value, msgenArgs.OutDir.Value)
+			return msgen.Create(msgenConfig, cmdArgs.ModuleUrl.Value, msgenArgs.SpecFile.Value, msgenArgs.WorkingDir.Value)
 		},
 	}
 

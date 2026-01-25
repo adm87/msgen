@@ -6,8 +6,8 @@ import (
 )
 
 // Create initializes a new Go module (if needed) and generates the microservice code.
-func Create(msgenConfig *models.MSGenConfig, moduleUrl, specFile, outDir string) error {
-	isModule, err := utils.IsGoModule(outDir)
+func Create(msgenConfig *models.MSGenConfig, moduleUrl, specFile, workingDir string) error {
+	isModule, err := utils.IsGoModule(workingDir)
 
 	if err != nil {
 		return err
@@ -16,14 +16,14 @@ func Create(msgenConfig *models.MSGenConfig, moduleUrl, specFile, outDir string)
 	if !isModule {
 		msgenConfig.ModuleUrl = moduleUrl
 
-		if err := utils.InitGoModule(moduleUrl, outDir); err != nil {
+		if err := utils.InitGoModule(moduleUrl, workingDir); err != nil {
 			return err
 		}
 
-		if err := utils.GoGet(outDir, "github.com/go-chi/chi/v5"); err != nil {
+		if err := utils.GoGet(workingDir, "github.com/go-chi/chi/v5"); err != nil {
 			return err
 		}
 	}
 
-	return Generate(msgenConfig, specFile, outDir)
+	return Generate(msgenConfig, specFile, workingDir)
 }

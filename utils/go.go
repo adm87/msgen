@@ -60,40 +60,64 @@ func IsGoModule(path string) (bool, error) {
 	return exists, nil
 }
 
-func InitGoModule(moduleUrl, outDir string) error {
+func InitGoModule(moduleUrl, path string) error {
 	log.Info("Initializing Go module:", "moduleUrl", moduleUrl)
 
 	cmd := exec.Command("go", "mod", "init", moduleUrl)
-	cmd.Dir = outDir
+	cmd.Dir = path
 
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error("go mod init failed", "output", string(out))
+		return err
+	}
+
+	return nil
 }
 
-func GoGet(outDir, moduleUrl string) error {
+func GoGet(path, moduleUrl string) error {
 	log.Info("Running 'go get' for module:", "moduleUrl", moduleUrl)
 
 	cmd := exec.Command("go", "get", moduleUrl)
-	cmd.Dir = outDir
+	cmd.Dir = path
 
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error("go get failed", "output", string(out))
+		return err
+	}
+
+	return nil
 }
 
-func ModTidy(outDir string) error {
+func ModTidy(path string) error {
 	log.Info("Running 'go mod tidy'")
 
 	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Dir = outDir
+	cmd.Dir = path
 
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error("go mod tidy failed", "output", string(out))
+		return err
+	}
+
+	return nil
 }
 
-func GoFmt(outDir string) error {
+func GoFmt(path string) error {
 	log.Info("Running 'go fmt'")
 
 	cmd := exec.Command("go", "fmt", "./...")
-	cmd.Dir = outDir
+	cmd.Dir = path
 
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error("go fmt failed", "output", string(out))
+		return err
+	}
+
+	return nil
 }
 
 func GetModuleUrl(path string) (string, error) {

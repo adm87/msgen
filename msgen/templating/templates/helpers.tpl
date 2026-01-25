@@ -33,7 +33,7 @@
 {{- /*
     Generates parameter list signature for methods
 */ -}}
-{{- define "method.signature.parameters" -}}
+{{- define "method.parameters" -}}
     {{- range $i, $param := . -}}
         {{- if $i }}, {{ end -}}
         {{- template "format.field" $param -}}
@@ -43,7 +43,7 @@
 {{- /*
     Generates return type signature for methods
 */ -}}
-{{- define "method.signature.returns" -}}
+{{- define "method.returns" -}}
     {{- if gt (len .) 1 -}}
         ({{- range $i, $ret := . -}}
             {{- if $i }}, {{ end -}}

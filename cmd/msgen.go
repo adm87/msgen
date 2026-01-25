@@ -36,12 +36,6 @@ func MSGen(version string) (*cobra.Command, error) {
 				return err
 			}
 
-			cmdArgs.OutDir.Value, err = filepath.Abs(cmdArgs.OutDir.Value)
-
-			if err != nil {
-				return err
-			}
-
 			configFile := filepath.Join(cmdArgs.WorkingDir.Value, models.MSConfigFileName)
 
 			if exists, err := utils.FileExists(configFile); err != nil {
@@ -56,9 +50,9 @@ func MSGen(version string) (*cobra.Command, error) {
 				config = loaded
 			}
 
-			cmdArgs.SpecFile.Value = filepath.Join(cmdArgs.WorkingDir.Value, cmdArgs.SpecFile.Value)
+			specFile := filepath.Join(cmdArgs.WorkingDir.Value, cmdArgs.SpecFile.Value)
 
-			if exists, err := utils.FileExists(cmdArgs.SpecFile.Value); err != nil {
+			if exists, err := utils.FileExists(specFile); err != nil {
 				return err
 			} else if !exists {
 				return ErrMissingSpecFile
@@ -78,12 +72,10 @@ func MSGen(version string) (*cobra.Command, error) {
 
 	createCmd := create.Command(&config, &cmdArgs)
 	utils.AddStringFlag(createCmd, &cmdArgs.SpecFile)
-	utils.AddStringFlag(createCmd, &cmdArgs.OutDir)
 	createCmd.MarkFlagRequired(cmdArgs.SpecFile.Name)
 
 	updateCmd := update.Command(&config, &cmdArgs)
 	utils.AddStringFlag(updateCmd, &cmdArgs.SpecFile)
-	utils.AddStringFlag(updateCmd, &cmdArgs.OutDir)
 	updateCmd.MarkFlagRequired(cmdArgs.SpecFile.Name)
 
 	c.AddCommand(createCmd, updateCmd)
