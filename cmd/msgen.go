@@ -64,6 +64,7 @@ func MSGen(version string) (*cobra.Command, error) {
 				return ErrMissingSpecFile
 			}
 
+			config.CodegenVersion = version
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

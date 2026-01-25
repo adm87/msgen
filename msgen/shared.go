@@ -1,6 +1,7 @@
 package msgen
 
 import (
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -36,6 +37,10 @@ func Generate(msgenConfig *models.MSGenConfig, specFile string, outDir string) e
 	}
 
 	if err := generateFiles(ctx, templating.MicroserviceTemplateTree, outDir); err != nil {
+		return err
+	}
+
+	if err := writeMSConfig(ctx, outDir); err != nil {
 		return err
 	}
 
@@ -81,7 +86,21 @@ func generateFiles(ctx *Context, node *templating.Node, currentPath string) erro
 				return err
 			}
 
-			return nil
+			continue
+		}
+
+		if child.GenerateOnce {
+			exists, err := utils.FileExists(childPath)
+
+			if err != nil {
+				return err
+			}
+
+			if exists {
+				log.Info("Skipping generation of (already exists):", "path", childPath)
+
+				continue
+			}
 		}
 
 		log.Info("Generating file:", "path", childPath)
@@ -92,4 +111,17 @@ func generateFiles(ctx *Context, node *templating.Node, currentPath string) erro
 	}
 
 	return nil
+}
+
+func writeMSConfig(ctx *Context, outDir string) error {
+	configPath := filepath.Join(outDir, models.MSConfigFileName)
+
+	log.Info("Writing msgen config file:", "path", configPath)
+
+	data, err := json.MarshalIndent(ctx.MSGenConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return utils.WriteFile(configPath, string(data))
 }

@@ -17,12 +17,26 @@ func Create(msgenConfig *models.MSGenConfig, moduleUrl, specFile, outDir string)
 	}
 
 	if !isModule {
+		msgenConfig.ModuleUrl = moduleUrl
+
 		if err := initGoModule(moduleUrl, outDir); err != nil {
 			return err
 		}
 
 		if err := goGetChi(outDir); err != nil {
 			return err
+		}
+	} else {
+		modUrl, err := getModuleUrl(outDir)
+
+		if err != nil {
+			return err
+		}
+
+		if msgenConfig.ModuleUrl != modUrl {
+			log.Warn("Module URL mismatch in config and mod file. Using mod file:", "configUrl", msgenConfig.ModuleUrl, "modUrl", modUrl)
+
+			msgenConfig.ModuleUrl = modUrl
 		}
 	}
 
@@ -45,4 +59,18 @@ func goGetChi(outDir string) error {
 	cmd.Dir = outDir
 
 	return cmd.Run()
+}
+
+func getModuleUrl(outDir string) (string, error) {
+	cmd := exec.Command("go", "list", "-m")
+
+	cmd.Dir = outDir
+
+	output, err := cmd.Output()
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(output), nil
 }

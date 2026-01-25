@@ -27,11 +27,6 @@ var MicroserviceTemplateTree = &Node{
 					// GenerateOnce: true,
 				},
 				{
-					Name:     "startup.go",
-					Template: "templates/microservice/server/startup.tpl",
-					// GenerateOnce: true,
-				},
-				{
 					Name: "generated",
 					Children: []*Node{
 						{

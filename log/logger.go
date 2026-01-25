@@ -46,6 +46,10 @@ func Info(msg string, args ...any) {
 	slogger.Info(msg, args...)
 }
 
+func Warn(msg string, args ...any) {
+	slogger.Warn(msg, args...)
+}
+
 func Error(msg string, args ...any) {
 	slogger.Error(msg, args...)
 }
