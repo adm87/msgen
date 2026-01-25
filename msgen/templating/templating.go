@@ -5,6 +5,7 @@ import (
 	"embed"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/adm87/msgen/models"
 	"github.com/adm87/msgen/utils"
@@ -25,6 +26,8 @@ func loadTemplate(templatePath string) (string, error) {
 
 var templatingFuncs = template.FuncMap{
 	"buildRoutingTree": buildRoutingTree,
+	"indent":           indent,
+	"pascalCase":       pascalCase,
 }
 
 func RenderTemplate(name, templatePath string, data any) (string, error) {
@@ -41,6 +44,7 @@ func RenderTemplate(name, templatePath string, data any) (string, error) {
 	}
 
 	t, err := template.New(name).Funcs(templatingFuncs).Parse(helpersTmpl + tmpl)
+	t = t.Funcs(template.FuncMap{"include": includeTemplate(t)})
 
 	if err != nil {
 		return "", err
@@ -63,6 +67,57 @@ func RenderTemplateToFile(templatePath, outputPath string, data any) error {
 	}
 
 	return utils.WriteFile(outputPath, renderedContent)
+}
+
+func includeTemplate(t *template.Template) func(string, any) (string, error) {
+	return func(n string, d any) (string, error) {
+		buf := new(bytes.Buffer)
+		tpl := t.Lookup(n)
+
+		if tpl == nil {
+			return "", nil
+		}
+
+		if err := tpl.Execute(buf, d); err != nil {
+			return "", err
+		}
+
+		return buf.String(), nil
+	}
+}
+
+func indent(text string, spaces int) string {
+	prefix := strings.Repeat(" ", spaces)
+	lines := strings.Split(text, "\n")
+
+	for i, line := range lines {
+		if len(line) > 0 {
+			lines[i] = prefix + line
+		}
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func pascalCase(input string) string {
+	words := strings.FieldsFunc(input, func(r rune) bool {
+		return r == '_' || r == '-' || unicode.IsSpace(r)
+	})
+
+	for i, w := range words {
+		if len(w) == 0 {
+			continue
+		}
+
+		runes := []rune(w)
+		runes[0] = unicode.ToUpper(runes[0])
+		for j := 1; j < len(runes); j++ {
+			runes[j] = unicode.ToLower(runes[j])
+		}
+		words[i] = string(runes)
+	}
+
+	return strings.Join(words, "")
 }
 
 func buildRoutingTree(methods []models.SpecMethod) *models.SpecRoutingNode {

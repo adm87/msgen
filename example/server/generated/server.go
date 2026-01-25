@@ -2,30 +2,97 @@
 package generated
 
 import (
+	"net/http"
+
 	"github.com/adm87/msgen/example/spec"
+	"github.com/go-chi/chi/v5"
 )
 
-// ServerController defines a controller to handle server operations.
-//
-// It must implement the methods defined in the service specification.
-type ServerController interface {
-	spec.ExampleService
-
-	Startup() error
-	Shutdown() error
-}
+// =================================================================
+// Server implementation
+// =================================================================
 
 // Server represents the microservice server.
 type Server struct {
-	controller ServerController
+	router     chi.Router
+	controller spec.ExampleService
 }
 
-func NewServer(controller ServerController) *Server {
+// NewServer creates a new Server instance with the provided controller.
+func NewServer(controller spec.ExampleService) *Server {
 	return &Server{
 		controller: controller,
 	}
 }
 
+// Start setups the server routing, middleware, and starts the controller.
 func (s *Server) Start() error {
+	s.router = chi.NewRouter()
+
+	if err := configureMiddleware(s); err != nil {
+		return err
+	}
+
+	if err := configureRoutes(s); err != nil {
+		return err
+	}
+
+	if err := startController(s); err != nil {
+		return err
+	}
+
+	return http.ListenAndServe(":8080", s.router)
+}
+
+// Stop shuts down the server and stops the controller.
+func (s *Server) Stop() error {
+	return stopController(s)
+}
+
+func startController(s *Server) error {
+	if controller, ok := s.controller.(OnStart); ok {
+		if err := controller.Start(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func stopController(s *Server) error {
+	if controller, ok := s.controller.(OnStop); ok {
+		if err := controller.Stop(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func configureMiddleware(s *Server) error {
+	s.router = chi.NewRouter()
+
+	if controller, ok := s.controller.(OnConfigureMiddleware); ok {
+		controller.ConfigureMiddleware(s.router)
+	}
+
+	return nil
+}
+
+func configureRoutes(s *Server) error {
+	r := s.router
+	r.Route("/v1", func(r chi.Router) {
+		r.Route("/users", func(r chi.Router) {
+			r.Post("/", CreateUserProfile)
+			r.Route("/filter", func(r chi.Router) {
+				r.Get("/", FilterUserProfiles)
+			})
+			r.Route("/{userID}", func(r chi.Router) {
+				r.Delete("/", DeleteUserProfile)
+				r.Put("/", UpdateUserProfile)
+				r.Get("/", GetUserProfile)
+			})
+		})
+	})
 	return nil
 }

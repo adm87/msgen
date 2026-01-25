@@ -1,0 +1,28 @@
+{{- template "disclaimer.go.noedit" }}
+package generated
+
+import (
+    "github.com/go-chi/chi/v5"
+)
+
+// =================================================================
+// Interfaces for lifecycle hooks
+// Implement these in you controller to hook into server lifecycle events.
+// =================================================================
+
+// OnStart is implemented by controllers that need to perform actions when the server starts.
+//
+// Start is called after routes are configured, and before the server begins handling requests.
+type OnStart interface {
+    Start() error
+}
+
+// OnStop is implemented by controllers that need to perform actions when the server stops.
+type OnStop interface {
+    Stop() error
+}
+
+// OnConfigureMiddleware is implemented by controllers that need to configure middleware.
+type OnConfigureMiddleware interface {
+    ConfigureMiddleware(r chi.Router)
+}
