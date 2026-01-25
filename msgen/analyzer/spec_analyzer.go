@@ -101,9 +101,15 @@ func parseTypeSpec(genDecl *ast.GenDecl, Spec *models.Spec) error {
 			return ErrMultipleMethodNames
 		}
 
+		methodAttrs, err := parseMethodAttributes(collectAttributes(method.Doc))
+
+		if err != nil {
+			return err
+		}
+
 		specMethod := models.SpecMethod{
 			Name:       method.Names[0].Name,
-			Attributes: parseMethodAttributes(collectAttributes(method.Doc)),
+			Attributes: methodAttrs,
 			Parameters: parseFieldList(funcType.Params),
 			Returns:    parseFieldList(funcType.Results),
 		}
@@ -173,7 +179,7 @@ func parseSpecAttributes(attributes map[string][]string) *models.SpecAttributes 
 	return specAttrs
 }
 
-func parseMethodAttributes(attributes map[string][]string) *models.SpecMethodAttributes {
+func parseMethodAttributes(attributes map[string][]string) (*models.SpecMethodAttributes, error) {
 	methodAttrs := &models.SpecMethodAttributes{}
 
 	if summary, exists := attributes[models.SummaryAttr]; exists && len(summary) > 0 {
@@ -201,26 +207,50 @@ func parseMethodAttributes(attributes map[string][]string) *models.SpecMethodAtt
 	}
 
 	if successAttrs, exists := attributes[models.SuccessAttr]; exists && len(successAttrs) > 0 {
-		methodAttrs.Success = parseResponseAttr(successAttrs[0])
+		attr, err := parseResponseAttr(successAttrs[0])
+
+		if err != nil {
+			return nil, err
+		}
+
+		methodAttrs.Success = attr
 	}
 
 	if failureAttrs, exists := attributes[models.FailureAttr]; exists && len(failureAttrs) > 0 {
 		for _, failureAttr := range failureAttrs {
-			methodAttrs.Failures = append(methodAttrs.Failures, parseResponseAttr(failureAttr))
+			attr, err := parseResponseAttr(failureAttr)
+
+			if err != nil {
+				return nil, err
+			}
+
+			methodAttrs.Failures = append(methodAttrs.Failures, attr)
 		}
 	}
 
 	if paramAttrs, exists := attributes[models.ParamAttr]; exists && len(paramAttrs) > 0 {
 		for _, paramAttr := range paramAttrs {
-			methodAttrs.Parameters = append(methodAttrs.Parameters, parseParamAttr(paramAttr))
+			attr, err := parseParamAttr(paramAttr)
+
+			if err != nil {
+				return nil, err
+			}
+
+			methodAttrs.Parameters = append(methodAttrs.Parameters, attr)
 		}
 	}
 
 	if routerAttrs, exists := attributes[models.RouterAttr]; exists && len(routerAttrs) > 0 {
-		methodAttrs.Router = parseRouterAttr(routerAttrs[0])
+		attr, err := parseRouterAttr(routerAttrs[0])
+
+		if err != nil {
+			return nil, err
+		}
+
+		methodAttrs.Router = attr
 	}
 
-	return methodAttrs
+	return methodAttrs, nil
 }
 
 func formatSelectorType(expr *ast.SelectorExpr, prefix string) string {

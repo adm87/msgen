@@ -1,37 +1,56 @@
 package analyzer
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/adm87/msgen/models"
 )
 
-func parseParamAttr(attrStr string) models.SpecMethodParamAttribute {
+var (
+	ErrInvalidParamAttr    = errors.New("invalid parameter attribute, // @Param <name> <type> <in> <required>")
+	ErrInvalidResponseAttr = errors.New("invalid response attribute, // @Success <code> <type> <dataType>")
+	ErrInvalidRouterAttr   = errors.New("invalid router attribute, // @Router <path> [<method>]")
+)
+
+func parseParamAttr(attrStr string) (models.SpecMethodParamAttribute, error) {
 	parts := strings.Split(attrStr, " ")
+
+	if len(parts) != 4 {
+		return models.SpecMethodParamAttribute{}, ErrInvalidParamAttr
+	}
 
 	return models.SpecMethodParamAttribute{
 		Name:     parts[0],
 		Type:     parts[1],
 		In:       parts[2],
 		Required: parts[3] == "true",
-	}
+	}, nil
 }
 
-func parseResponseAttr(attrStr string) models.SpecMethodResponseAttribute {
+func parseResponseAttr(attrStr string) (models.SpecMethodResponseAttribute, error) {
 	parts := strings.Split(attrStr, " ")
+
+	if len(parts) != 3 {
+		return models.SpecMethodResponseAttribute{}, ErrInvalidResponseAttr
+	}
 
 	return models.SpecMethodResponseAttribute{
 		Code:     parts[0],
 		Type:     parts[1],
 		DataType: parts[2],
-	}
+	}, nil
 }
 
-func parseRouterAttr(attrStr string) models.SpecMethodRouterAttribute {
+func parseRouterAttr(attrStr string) (models.SpecMethodRouterAttribute, error) {
 	parts := strings.Split(attrStr, " ")
+
+	if len(parts) != 2 {
+		return models.SpecMethodRouterAttribute{}, ErrInvalidRouterAttr
+	}
 
 	return models.SpecMethodRouterAttribute{
 		Path:   parts[0],
 		Method: strings.ToUpper(strings.Trim(parts[1], "[]")),
-	}
+	}, nil
 }
