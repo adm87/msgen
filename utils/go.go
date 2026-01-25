@@ -3,9 +3,12 @@ package utils
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/adm87/msgen/log"
 )
 
 var (
@@ -55,4 +58,53 @@ func IsGoModule(path string) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+func InitGoModule(moduleUrl, outDir string) error {
+	log.Info("Initializing Go module:", "moduleUrl", moduleUrl)
+
+	cmd := exec.Command("go", "mod", "init", moduleUrl)
+	cmd.Dir = outDir
+
+	return cmd.Run()
+}
+
+func GoGet(outDir, moduleUrl string) error {
+	log.Info("Running 'go get' for module:", "moduleUrl", moduleUrl)
+
+	cmd := exec.Command("go", "get", moduleUrl)
+	cmd.Dir = outDir
+
+	return cmd.Run()
+}
+
+func ModTidy(outDir string) error {
+	log.Info("Running 'go mod tidy'")
+
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = outDir
+
+	return cmd.Run()
+}
+
+func GoFmt(outDir string) error {
+	log.Info("Running 'go fmt'")
+
+	cmd := exec.Command("go", "fmt", "./...")
+	cmd.Dir = outDir
+
+	return cmd.Run()
+}
+
+func GetModuleUrl(path string) (string, error) {
+	cmd := exec.Command("go", "list", "-m")
+	cmd.Dir = path
+
+	output, err := cmd.Output()
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(output[:len(output)-1]), nil
 }

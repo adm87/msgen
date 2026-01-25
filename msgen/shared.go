@@ -21,6 +21,10 @@ type Context struct {
 
 // Generate generates the microservice code based on the provided specification.
 func Generate(msgenConfig *models.MSGenConfig, specFile string, outDir string) error {
+	if err := validateModUrl(msgenConfig, outDir); err != nil {
+		return err
+	}
+
 	if err := removeGeneratedDirectories(outDir); err != nil {
 		return err
 	}
@@ -40,8 +44,32 @@ func Generate(msgenConfig *models.MSGenConfig, specFile string, outDir string) e
 		return err
 	}
 
-	if err := writeMSConfig(ctx, outDir); err != nil {
+	if err := writeMSGenConfig(ctx, outDir); err != nil {
 		return err
+	}
+
+	if err := utils.GoFmt(outDir); err != nil {
+		return err
+	}
+
+	if err := utils.ModTidy(outDir); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateModUrl(msgenConfig *models.MSGenConfig, outDir string) error {
+	modUrl, err := utils.GetModuleUrl(outDir)
+
+	if err != nil {
+		return err
+	}
+
+	if msgenConfig.ModuleUrl != modUrl {
+		log.Warn("Module URL mismatch in config and mod file. Using mod file:", "configUrl", msgenConfig.ModuleUrl, "modUrl", modUrl)
+
+		msgenConfig.ModuleUrl = modUrl
 	}
 
 	return nil
@@ -70,8 +98,6 @@ func removeGeneratedDirectories(outDir string) error {
 func generateFiles(ctx *Context, node *templating.Node, currentPath string) error {
 	for _, child := range node.Children {
 		if shouldGenerate := child.ShouldGenerate; shouldGenerate != nil && !shouldGenerate() {
-			log.Info("Skipping generation of:", "name", child.Name)
-
 			continue
 		}
 
@@ -97,8 +123,6 @@ func generateFiles(ctx *Context, node *templating.Node, currentPath string) erro
 			}
 
 			if exists {
-				log.Info("Skipping generation of (already exists):", "path", childPath)
-
 				continue
 			}
 		}
@@ -113,7 +137,7 @@ func generateFiles(ctx *Context, node *templating.Node, currentPath string) erro
 	return nil
 }
 
-func writeMSConfig(ctx *Context, outDir string) error {
+func writeMSGenConfig(ctx *Context, outDir string) error {
 	configPath := filepath.Join(outDir, models.MSConfigFileName)
 
 	log.Info("Writing msgen config file:", "path", configPath)
