@@ -108,7 +108,7 @@ func NewUserServiceController() *UserServiceController {
     return &UserServiceController{}
 }
 
-func (c *UserServiceController) GetUser(c *ctx.Context, userID string) (models.User, error) {
+func (ctlr *UserServiceController) GetUser(c *ctx.Context, userID string) (models.User, error) {
     // Your implementation here
     user := models.User{
         ID:   userID,
@@ -117,7 +117,7 @@ func (c *UserServiceController) GetUser(c *ctx.Context, userID string) (models.U
     return user, nil
 }
 
-func (c *UserServiceController) CreateUser(c *ctx.Context, req models.CreateUserRequest) (models.User, error) {
+func (ctlr *UserServiceController) CreateUser(c *ctx.Context, req models.CreateUserRequest) (models.User, error) {
     // Validate and create user
     if req.Name == "" {
         return models.User{}, web.NewServerError(http.StatusBadRequest, "name is required")
@@ -194,33 +194,33 @@ Implement optional hooks in your controller for server lifecycle events:
 
 ```go
 // Called when server starts (after routes are configured, before accepting requests)
-func (c *YourController) Start(logger *slog.Logger) error {
+func (ctlr *YourController) Start(logger *slog.Logger) error {
     // Initialize resources, connect to databases, etc.
     logger.Info("starting controller")
     return nil
 }
 
 // Called when server stops
-func (c *YourController) Stop(logger *slog.Logger) error {
+func (ctlr *YourController) Stop(logger *slog.Logger) error {
     // Cleanup resources
     logger.Info("stopping controller")
     return nil
 }
 
 // Customize the logger (called during server initialization)
-func (c *YourController) ConfigureLogger(logger *slog.Logger) {
+func (ctlr *YourController) ConfigureLogger(logger *slog.Logger) {
     // Customize logging configuration
 }
 
 // Add custom middleware to the main router
-func (c *YourController) ConfigureRouter(r chi.Router, logger *slog.Logger) {
+func (ctlr *YourController) ConfigureRouter(r chi.Router, logger *slog.Logger) {
     r.Use(middleware.RequestID)
     r.Use(middleware.Logger)
     logger.Info("configured router middleware")
 }
 
 // Customize routers for specific path scopes
-func (c *YourController) ConfigureScopedRouter(r chi.Router, path string, logger *slog.Logger) {
+func (ctlr *YourController) ConfigureScopedRouter(r chi.Router, path string, logger *slog.Logger) {
     // Add path-specific middleware
     if path == "/admin" {
         r.Use(middleware.BasicAuth("admin-realm", map[string]string{"admin": "password"}))
@@ -321,12 +321,12 @@ import (
     "net/http"
 )
 
-func (c *Controller) GetUser(c *ctx.Context, id string) (User, error) {
+func (ctlr *Controller) GetUser(c *ctx.Context, id string) (User, error) {
     if id == "" {
         return User{}, web.NewServerError(http.StatusBadRequest, "ID is required")
     }
     
-    user, err := c.db.FindUser(id)
+    user, err := ctlr.db.FindUser(id)
     if err != nil {
         return User{}, web.NewServerError(http.StatusNotFound, "User not found")
     }
@@ -340,7 +340,7 @@ func (c *Controller) GetUser(c *ctx.Context, id string) (User, error) {
 Each handler receives a context with logger and HTTP request:
 
 ```go
-func (c *Controller) GetUser(c *ctx.Context, id string) (User, error) {
+func (ctlr *Controller) GetUser(c *ctx.Context, id string) (User, error) {
     // Access logger
     c.Logger().Info("fetching user", "id", id)
     
