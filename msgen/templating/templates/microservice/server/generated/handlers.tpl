@@ -3,6 +3,8 @@ package generated
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 
     {{ template "import.statements" .Spec.Imports }}
@@ -29,13 +31,30 @@ func getQueryParam(r *http.Request, name string, required bool) (string, *web.Se
 }
 
 func getBodyParam[T any](r *http.Request, required bool) (T, *web.ServerError) {
-    var param T
-    decoder := json.NewDecoder(r.Body)
-    err := decoder.Decode(&param)
-    if err != nil {
-        return param, web.NewServerError(http.StatusBadRequest, "invalid request body: "+err.Error())
-    }
-    return param, nil
+	var param T
+
+	if r.Body == nil {
+		if required {
+			return param, web.NewServerError(http.StatusBadRequest, "missing request body")
+		}
+		return param, nil
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&param); err != nil {
+		if errors.Is(err, io.EOF) {
+			if required {
+				return param, web.NewServerError(http.StatusBadRequest, "missing request body")
+			}
+			return param, nil
+		}
+
+		return param, web.NewServerError(http.StatusBadRequest, "invalid request body: "+err.Error())
+	}
+
+	return param, nil
 }
 
 {{- range $method := .Spec.Methods }}
@@ -50,6 +69,7 @@ func {{ .Name }}(s *Server) http.HandlerFunc {
         {{- if $param.FromPath }}
         {{ $param.Name }}, err := getPathParam(r, "{{ $param.Name }}", true)
         if err != nil {
+            logger.Error("failed to get path parameter", "param", "{{ $param.Name }}", "error", err)
             web.WriteErrorResponse(w, err)
             return
         }
@@ -57,6 +77,7 @@ func {{ .Name }}(s *Server) http.HandlerFunc {
         {{- if $param.FromQuery }}
         {{ $param.Name }}, err := getQueryParam(r, "{{ $param.Name }}", false)
         if err != nil {
+            logger.Error("failed to get query parameter", "param", "{{ $param.Name }}", "error", err)
             web.WriteErrorResponse(w, err)
             return
         }
@@ -64,6 +85,7 @@ func {{ .Name }}(s *Server) http.HandlerFunc {
         {{- if $param.FromBody }}
         {{ $param.Name }}, err := getBodyParam[{{ $param.Type }}](r, true)
         if err != nil {
+            logger.Error("failed to get request body", "param", "{{ $param.Name }}", "error", err)
             web.WriteErrorResponse(w, err)
             return
         }
@@ -77,7 +99,8 @@ func {{ .Name }}(s *Server) http.HandlerFunc {
         {{- end }}
 
         if handlerErr != nil {
-            if serverErr, ok := handlerErr.(*web.ServerError); ok {
+            logger.Error(handlerErr.Error())
+            if serverErr, ok := handlerErr.(*web.ServerError); ok {                
                 web.WriteErrorResponse(w, serverErr)
             } else {
                 web.WriteErrorResponse(w, web.NewServerError(http.StatusInternalServerError, handlerErr.Error()))

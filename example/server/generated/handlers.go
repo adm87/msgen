@@ -3,6 +3,8 @@ package generated
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 
 	"github.com/adm87/msgen/example/models"
@@ -30,11 +32,28 @@ func getQueryParam(r *http.Request, name string, required bool) (string, *web.Se
 
 func getBodyParam[T any](r *http.Request, required bool) (T, *web.ServerError) {
 	var param T
+
+	if r.Body == nil {
+		if required {
+			return param, web.NewServerError(http.StatusBadRequest, "missing request body")
+		}
+		return param, nil
+	}
+
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&param)
-	if err != nil {
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&param); err != nil {
+		if errors.Is(err, io.EOF) {
+			if required {
+				return param, web.NewServerError(http.StatusBadRequest, "missing request body")
+			}
+			return param, nil
+		}
+
 		return param, web.NewServerError(http.StatusBadRequest, "invalid request body: "+err.Error())
 	}
+
 	return param, nil
 }
 
@@ -46,6 +65,7 @@ func CreateUserProfile(s *Server) http.HandlerFunc {
 
 		user, err := getBodyParam[models.CreateUserRequest](r, true)
 		if err != nil {
+			logger.Error("failed to get request body", "param", "user", "error", err)
 			web.WriteErrorResponse(w, err)
 			return
 		}
@@ -53,6 +73,7 @@ func CreateUserProfile(s *Server) http.HandlerFunc {
 		result, handlerErr := s.controller.CreateUserProfile(context, user)
 
 		if handlerErr != nil {
+			logger.Error(handlerErr.Error())
 			if serverErr, ok := handlerErr.(*web.ServerError); ok {
 				web.WriteErrorResponse(w, serverErr)
 			} else {
@@ -72,6 +93,7 @@ func DeleteUserProfile(s *Server) http.HandlerFunc {
 
 		userID, err := getPathParam(r, "userID", true)
 		if err != nil {
+			logger.Error("failed to get path parameter", "param", "userID", "error", err)
 			web.WriteErrorResponse(w, err)
 			return
 		}
@@ -79,6 +101,7 @@ func DeleteUserProfile(s *Server) http.HandlerFunc {
 		handlerErr := s.controller.DeleteUserProfile(context, userID)
 
 		if handlerErr != nil {
+			logger.Error(handlerErr.Error())
 			if serverErr, ok := handlerErr.(*web.ServerError); ok {
 				web.WriteErrorResponse(w, serverErr)
 			} else {
@@ -98,12 +121,14 @@ func UpdateUserProfile(s *Server) http.HandlerFunc {
 
 		userID, err := getPathParam(r, "userID", true)
 		if err != nil {
+			logger.Error("failed to get path parameter", "param", "userID", "error", err)
 			web.WriteErrorResponse(w, err)
 			return
 		}
 
 		user, err := getBodyParam[models.UserProfile](r, true)
 		if err != nil {
+			logger.Error("failed to get request body", "param", "user", "error", err)
 			web.WriteErrorResponse(w, err)
 			return
 		}
@@ -111,6 +136,7 @@ func UpdateUserProfile(s *Server) http.HandlerFunc {
 		result, handlerErr := s.controller.UpdateUserProfile(context, userID, user)
 
 		if handlerErr != nil {
+			logger.Error(handlerErr.Error())
 			if serverErr, ok := handlerErr.(*web.ServerError); ok {
 				web.WriteErrorResponse(w, serverErr)
 			} else {
@@ -130,6 +156,7 @@ func GetUserProfile(s *Server) http.HandlerFunc {
 
 		userID, err := getPathParam(r, "userID", true)
 		if err != nil {
+			logger.Error("failed to get path parameter", "param", "userID", "error", err)
 			web.WriteErrorResponse(w, err)
 			return
 		}
@@ -137,6 +164,7 @@ func GetUserProfile(s *Server) http.HandlerFunc {
 		result, handlerErr := s.controller.GetUserProfile(context, userID)
 
 		if handlerErr != nil {
+			logger.Error(handlerErr.Error())
 			if serverErr, ok := handlerErr.(*web.ServerError); ok {
 				web.WriteErrorResponse(w, serverErr)
 			} else {
@@ -156,6 +184,7 @@ func FilterUserProfiles(s *Server) http.HandlerFunc {
 
 		country, err := getQueryParam(r, "country", false)
 		if err != nil {
+			logger.Error("failed to get query parameter", "param", "country", "error", err)
 			web.WriteErrorResponse(w, err)
 			return
 		}
@@ -163,6 +192,7 @@ func FilterUserProfiles(s *Server) http.HandlerFunc {
 		result, handlerErr := s.controller.FilterUserProfiles(context, country)
 
 		if handlerErr != nil {
+			logger.Error(handlerErr.Error())
 			if serverErr, ok := handlerErr.(*web.ServerError); ok {
 				web.WriteErrorResponse(w, serverErr)
 			} else {
