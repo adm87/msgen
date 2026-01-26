@@ -16,20 +16,25 @@ import (
 //
 // Start is called after routes are configured, and before the server begins handling requests.
 type OnStart interface {
-	Start() error
+	Start(logger *slog.Logger) error
 }
 
 // OnStop is implemented by controllers that need to perform actions when the server stops.
 type OnStop interface {
-	Stop() error
+	Stop(logger *slog.Logger) error
 }
 
 // OnConfigureLogger is implemented by controllers that need to customize logging.
 type OnConfigureLogger interface {
-	ConfigureLogger(logger *slog.Logger) error
+	ConfigureLogger(logger *slog.Logger)
 }
 
 // OnConfigureRouter is implemented by controllers that need to customize the router.
 type OnConfigureRouter interface {
-	ConfigureRouter(r chi.Router) error
+	ConfigureRouter(r chi.Router, logger *slog.Logger)
+}
+
+// OnConfigureScopedRouter is implemented by controllers that need to customize scoped routers.
+type OnConfigureScopedRouter interface {
+	ConfigureScopedRouter(r chi.Router, path string, logger *slog.Logger)
 }

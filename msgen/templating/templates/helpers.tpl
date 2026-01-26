@@ -62,14 +62,17 @@
 {{- define "configure.routes" -}}
 {{- $routes := .routes -}}
 {{- $router := .router -}}
-{{- range $path, $node := $routes.Children }}
-{{- $routerName := trim $path "{}" }}
-{{ $router }}.Route("/{{ $path }}", func({{ $routerName }} chi.Router) {
+{{- $server := .server -}}
+{{- $path := .path -}}
+{{- range $pathSegment, $node := $routes.Children }}
+{{- $routerName := trim $pathSegment "{}" }}
+{{ $router }}.Route("/{{ $pathSegment }}", func({{ $routerName }} chi.Router) {
+    configureScopedRouter({{ $routerName }}, {{ $server }}, "{{ $path }}/{{ $pathSegment }}")    
     {{- range $method := $node.Methods }}
-    {{ $routerName }}.{{ $method.Attributes.Router.Method | pascalCase }}("/", {{ $method.Name }}(s))
+    {{ $routerName }}.{{ $method.Attributes.Router.Method | pascalCase }}("/", {{ $method.Name }}({{ $server }}))
     {{- end }}
     {{- if gt (len $node.Children) 0 }}
-        {{- template "configure.routes" dict "routes" $node "router" $routerName }}
+        {{- template "configure.routes" dict "routes" $node "router" $routerName "server" $server "path" (print $path "/" $pathSegment) -}}
     {{- end }}
 })
 {{- end }}

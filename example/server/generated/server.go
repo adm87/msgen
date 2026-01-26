@@ -38,17 +38,20 @@ func NewServer(controller controller.ExampleServiceController) *Server {
 func (s *Server) Start() error {
 	s.router = chi.NewRouter()
 
-	if err := configureLogger(s); err != nil {
-		return err
+	s.router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintf(w, "Method %s not allowed\n", r.Method)
+	})
+
+	if controller, ok := s.controller.(OnConfigureLogger); ok {
+		controller.ConfigureLogger(s.logger)
 	}
 
-	if err := configureRouter(s); err != nil {
-		return err
+	if controller, ok := s.controller.(OnConfigureRouter); ok {
+		controller.ConfigureRouter(s.router, s.logger)
 	}
 
-	if err := configureRoutes(s); err != nil {
-		return err
-	}
+	configureRoutes(s)
 
 	if err := startController(s); err != nil {
 		return err
@@ -64,7 +67,7 @@ func (s *Server) Stop() error {
 
 func startController(s *Server) error {
 	if controller, ok := s.controller.(OnStart); ok {
-		if err := controller.Start(); err != nil {
+		if err := controller.Start(s.logger); err != nil {
 			return err
 		}
 	}
@@ -74,7 +77,7 @@ func startController(s *Server) error {
 
 func stopController(s *Server) error {
 	if controller, ok := s.controller.(OnStop); ok {
-		if err := controller.Stop(); err != nil {
+		if err := controller.Stop(s.logger); err != nil {
 			return err
 		}
 	}
@@ -82,48 +85,36 @@ func stopController(s *Server) error {
 	return nil
 }
 
-func configureRouter(s *Server) error {
-	s.router = chi.NewRouter()
-
-	s.router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		fmt.Fprintf(w, "Method %s not allowed\n", r.Method)
-	})
-
-	if controller, ok := s.controller.(OnConfigureRouter); ok {
-		return controller.ConfigureRouter(s.router)
-	}
-
-	return nil
-}
-
-func configureLogger(s *Server) error {
-	if controller, ok := s.controller.(OnConfigureLogger); ok {
-		return controller.ConfigureLogger(s.logger)
-	}
-
-	return nil
-}
-
-func configureRoutes(s *Server) error {
+func configureRoutes(s *Server) {
 	s.router.Route("/health", func(health chi.Router) {
+		configureScopedRouter(health, s, "/health")
 		health.Get("/", HealthCheck(s))
 	})
 	s.router.Route("/readiness", func(readiness chi.Router) {
+		configureScopedRouter(readiness, s, "/readiness")
 		readiness.Get("/", Readiness(s))
 	})
 	s.router.Route("/v1", func(v1 chi.Router) {
+		configureScopedRouter(v1, s, "/v1")
 		v1.Route("/users", func(users chi.Router) {
+			configureScopedRouter(users, s, "/v1/users")
 			users.Post("/", CreateUserProfile(s))
 			users.Route("/filter", func(filter chi.Router) {
+				configureScopedRouter(filter, s, "/v1/users/filter")
 				filter.Get("/", FilterUserProfiles(s))
 			})
 			users.Route("/{userID}", func(userID chi.Router) {
+				configureScopedRouter(userID, s, "/v1/users/{userID}")
 				userID.Delete("/", DeleteUserProfile(s))
 				userID.Put("/", UpdateUserProfile(s))
 				userID.Get("/", GetUserProfile(s))
 			})
 		})
 	})
-	return nil
+}
+
+func configureScopedRouter(r chi.Router, s *Server, path string) {
+	if controller, ok := s.controller.(OnConfigureScopedRouter); ok {
+		controller.ConfigureScopedRouter(r, path, s.logger)
+	}
 }
