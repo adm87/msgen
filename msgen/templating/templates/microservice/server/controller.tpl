@@ -2,6 +2,8 @@
 package server
 
 import (
+
+    "{{ .MSGenConfig.ModuleUrl }}/server/generated/ctx"
     {{ template "import.statements" .Spec.Imports }}
 )
 
@@ -15,19 +17,9 @@ func New{{ .Spec.Name }}Controller() *{{ .Spec.Name }}Controller {
     }
 }
 
-func (c *{{ .Spec.Name }}Controller) Startup() error {
-    // Implement startup logic here
-    return nil
-}
-
-func (c *{{ .Spec.Name }}Controller) Shutdown() error {
-    // Implement shutdown logic here
-    return nil
-}
-
 {{- range .Spec.Methods }}
 
-func (c *{{ $.Spec.Name }}Controller) {{ .Name }}({{ template "method.parameters" .Parameters }}) {{ template "method.returns" .Returns }} {
+func (c *{{ $.Spec.Name }}Controller) {{ .Name }}(ctx *ctx.Context, {{ template "method.parameters" .Parameters }}) {{ template "method.returns" .Returns }} {
     panic("not implemented")
 }
 {{- end }}

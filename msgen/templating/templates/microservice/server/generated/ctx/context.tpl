@@ -1,0 +1,27 @@
+{{- template "disclaimer.go.noedit" }}
+package ctx
+
+import (
+    "log/slog"
+    "net/http"
+)
+
+type Context struct {
+    logger *slog.Logger
+    request *http.Request
+}
+
+func NewContext(logger *slog.Logger, request *http.Request) *Context {
+    return &Context{
+        logger: logger,
+        request: request,
+    }
+}
+
+func (c *Context) Logger() *slog.Logger {
+    return c.logger
+}
+
+func (c *Context) Request() *http.Request {
+    return c.request
+}

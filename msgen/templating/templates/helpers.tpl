@@ -63,7 +63,7 @@
 {{- range $path, $node := .Children }}
 r.Route("/{{ $path }}", func(r chi.Router) {
     {{- range $method := $node.Methods }}
-    r.{{ $method.Attributes.Router.Method | pascalCase }}("/", {{ $method.Name }})
+    r.{{ $method.Attributes.Router.Method | pascalCase }}("/", {{ $method.Name }}(s))
     {{- end }}
     {{- if gt (len $node.Children) 0 }}
         {{- template "configure.routes" $node }}

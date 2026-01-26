@@ -1,12 +1,14 @@
 {{- template "disclaimer.go.noedit" }}
 package generated
 
-{{- $spec := printf "%s.%s" .Spec.Package .Spec.Name }}
-
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 
-    "{{ .MSGenConfig.ModuleUrl }}{{ .Spec.Path }}"
+    "{{ .MSGenConfig.ModuleUrl }}/server/generated/controller"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -17,13 +19,18 @@ import (
 // Server represents the microservice server.
 type Server struct {
     router chi.Router
-    controller {{ $spec }}
+    controller controller.{{ .Spec.Name }}Controller
+
+    logger *slog.Logger
 }
 
 // NewServer creates a new Server instance with the provided controller.
-func NewServer(controller {{ $spec }}) *Server {
+func NewServer(controller controller.{{ .Spec.Name }}Controller) *Server {
     return &Server{
         controller: controller,
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})).With("service", "{{ .Spec.Name }}"),
     }
 }
 
@@ -31,7 +38,11 @@ func NewServer(controller {{ $spec }}) *Server {
 func (s *Server) Start() error {
     s.router = chi.NewRouter()
 
-    if err := configureMiddleware(s); err != nil {
+    if err := configureLogger(s); err != nil {
+        return err
+    }
+
+    if err := configureRouter(s); err != nil {
         return err
     }
 
@@ -71,14 +82,27 @@ func stopController(s *Server) error {
     return nil
 }
 
-func configureMiddleware(s *Server) error {
+func configureRouter(s *Server) error {
     s.router = chi.NewRouter()
 
-    if controller, ok := s.controller.(OnConfigureMiddleware); ok {
-        controller.ConfigureMiddleware(s.router)
+	s.router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintf(w, "Method %s not allowed\n", r.Method)
+	})
+
+    if controller, ok := s.controller.(OnConfigureRouter); ok {
+        return controller.ConfigureRouter(s.router)
     }
 
     return nil
+}
+
+func configureLogger(s *Server) error {
+	if controller, ok := s.controller.(OnConfigureLogger); ok {
+		return controller.ConfigureLogger(s.logger)
+	}
+
+	return nil
 }
 
 func configureRoutes(s *Server) error {

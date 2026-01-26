@@ -2,6 +2,8 @@
 package generated
 
 import (
+	"log/slog"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -22,7 +24,12 @@ type OnStop interface {
 	Stop() error
 }
 
-// OnConfigureMiddleware is implemented by controllers that need to configure middleware.
-type OnConfigureMiddleware interface {
-	ConfigureMiddleware(r chi.Router)
+// OnConfigureLogger is implemented by controllers that need to customize logging.
+type OnConfigureLogger interface {
+	ConfigureLogger(logger *slog.Logger) error
+}
+
+// OnConfigureRouter is implemented by controllers that need to customize the router.
+type OnConfigureRouter interface {
+	ConfigureRouter(r chi.Router) error
 }

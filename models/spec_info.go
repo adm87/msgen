@@ -65,10 +65,12 @@ type SpecMethodAttributes struct {
 
 // SpecMethodParamAttribute represents attributes of a method parameter.
 type SpecMethodParamAttribute struct {
-	Name     string // Name of the parameter
-	Type     string // Type of the parameter
-	In       string // Location of the parameter (path, query, header, body)
-	Required bool   // Whether the parameter is required
+	Name      string // Name of the parameter
+	Type      string // Type of the parameter
+	FromPath  bool   // Whether the parameter is from the path
+	FromQuery bool   // Whether the parameter is from the query
+	FromBody  bool   // Whether the parameter is from the body
+	Required  bool   // Whether the parameter is required
 }
 
 // SpecMethodResponseAttribute represents attributes of a method response.

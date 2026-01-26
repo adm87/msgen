@@ -1,0 +1,32 @@
+{{- template "disclaimer.go.noedit" }}
+package web
+
+import "encoding/json"
+
+// ServerError represents a server error with a status code and message.
+type ServerError struct {
+    StatusCode int
+    Message    string
+}
+
+func NewServerError(statusCode int, message string) *ServerError {
+    return &ServerError{
+        StatusCode: statusCode,
+        Message:    message,
+    }
+}
+
+func (e *ServerError) Error() string {
+    return e.Message
+}
+
+func (e *ServerError) Json() ([]byte, error) {
+    return json.Marshal(e)
+}
+
+func ToServerError(err error) *ServerError {
+    if se, ok := err.(*ServerError); ok {
+        return se
+    }
+    return NewServerError(500, err.Error())
+}

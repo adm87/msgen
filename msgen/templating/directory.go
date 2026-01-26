@@ -30,6 +30,37 @@ var MicroserviceTemplateTree = &Node{
 					Name: "generated",
 					Children: []*Node{
 						{
+							Name: "controller",
+							Children: []*Node{
+								{
+									Name:     "controller.go",
+									Template: "templates/microservice/server/generated/controller/controller.tpl",
+								},
+							},
+						},
+						{
+							Name: "ctx",
+							Children: []*Node{
+								{
+									Name:     "context.go",
+									Template: "templates/microservice/server/generated/ctx/context.tpl",
+								},
+							},
+						},
+						{
+							Name: "web",
+							Children: []*Node{
+								{
+									Name:     "responses.go",
+									Template: "templates/microservice/server/generated/web/responses.tpl",
+								},
+								{
+									Name:     "server_error.go",
+									Template: "templates/microservice/server/generated/web/server_error.tpl",
+								},
+							},
+						},
+						{
 							Name:     "handlers.go",
 							Template: "templates/microservice/server/generated/handlers.tpl",
 						},

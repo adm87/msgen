@@ -2,9 +2,13 @@
 package generated
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 
-	"github.com/adm87/msgen/example/spec"
+	"github.com/adm87/msgen/example/server/generated/controller"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -15,13 +19,18 @@ import (
 // Server represents the microservice server.
 type Server struct {
 	router     chi.Router
-	controller spec.ExampleService
+	controller controller.ExampleServiceController
+
+	logger *slog.Logger
 }
 
 // NewServer creates a new Server instance with the provided controller.
-func NewServer(controller spec.ExampleService) *Server {
+func NewServer(controller controller.ExampleServiceController) *Server {
 	return &Server{
 		controller: controller,
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})).With("service", "ExampleService"),
 	}
 }
 
@@ -29,7 +38,11 @@ func NewServer(controller spec.ExampleService) *Server {
 func (s *Server) Start() error {
 	s.router = chi.NewRouter()
 
-	if err := configureMiddleware(s); err != nil {
+	if err := configureLogger(s); err != nil {
+		return err
+	}
+
+	if err := configureRouter(s); err != nil {
 		return err
 	}
 
@@ -69,11 +82,24 @@ func stopController(s *Server) error {
 	return nil
 }
 
-func configureMiddleware(s *Server) error {
+func configureRouter(s *Server) error {
 	s.router = chi.NewRouter()
 
-	if controller, ok := s.controller.(OnConfigureMiddleware); ok {
-		controller.ConfigureMiddleware(s.router)
+	s.router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintf(w, "Method %s not allowed\n", r.Method)
+	})
+
+	if controller, ok := s.controller.(OnConfigureRouter); ok {
+		return controller.ConfigureRouter(s.router)
+	}
+
+	return nil
+}
+
+func configureLogger(s *Server) error {
+	if controller, ok := s.controller.(OnConfigureLogger); ok {
+		return controller.ConfigureLogger(s.logger)
 	}
 
 	return nil
@@ -83,14 +109,14 @@ func configureRoutes(s *Server) error {
 	r := s.router
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/", CreateUserProfile)
+			r.Post("/", CreateUserProfile(s))
 			r.Route("/filter", func(r chi.Router) {
-				r.Get("/", FilterUserProfiles)
+				r.Get("/", FilterUserProfiles(s))
 			})
 			r.Route("/{userID}", func(r chi.Router) {
-				r.Delete("/", DeleteUserProfile)
-				r.Put("/", UpdateUserProfile)
-				r.Get("/", GetUserProfile)
+				r.Delete("/", DeleteUserProfile(s))
+				r.Put("/", UpdateUserProfile(s))
+				r.Get("/", GetUserProfile(s))
 			})
 		})
 	})

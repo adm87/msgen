@@ -3,6 +3,7 @@ package server
 
 import (
 	"github.com/adm87/msgen/example/models"
+	"github.com/adm87/msgen/example/server/generated/ctx"
 )
 
 type ExampleServiceController struct {
@@ -15,32 +16,22 @@ func NewExampleServiceController() *ExampleServiceController {
 	}
 }
 
-func (c *ExampleServiceController) Startup() error {
-	// Implement startup logic here
-	return nil
-}
-
-func (c *ExampleServiceController) Shutdown() error {
-	// Implement shutdown logic here
-	return nil
-}
-
-func (c *ExampleServiceController) CreateUserProfile(user models.CreateUserRequest) (models.UserProfile, error) {
+func (c *ExampleServiceController) CreateUserProfile(ctx *ctx.Context, user models.CreateUserRequest) (models.UserProfile, error) {
 	panic("not implemented")
 }
 
-func (c *ExampleServiceController) DeleteUserProfile(userID string) error {
+func (c *ExampleServiceController) DeleteUserProfile(ctx *ctx.Context, userID string) error {
 	panic("not implemented")
 }
 
-func (c *ExampleServiceController) UpdateUserProfile(userID string, user models.UserProfile) (models.UserProfile, error) {
+func (c *ExampleServiceController) UpdateUserProfile(ctx *ctx.Context, userID string, user models.UserProfile) (models.UserProfile, error) {
 	panic("not implemented")
 }
 
-func (c *ExampleServiceController) GetUserProfile(userID string) (models.UserProfile, error) {
+func (c *ExampleServiceController) GetUserProfile(ctx *ctx.Context, userID string) (models.UserProfile, error) {
 	panic("not implemented")
 }
 
-func (c *ExampleServiceController) FilterUserProfiles(age int, country string) ([]models.UserProfile, error) {
+func (c *ExampleServiceController) FilterUserProfiles(ctx *ctx.Context, country string) ([]models.UserProfile, error) {
 	panic("not implemented")
 }

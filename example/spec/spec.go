@@ -9,7 +9,7 @@ type ExampleService interface {
 	// @Summary Create a new user profile
 	// @Description Creates a new user profile with the provided information.
 	// @Version 1
-	// @Param user body models.CreateUserRequest true
+	// @Param user models.CreateUserRequest body true
 	// @Success 201 {object} models.UserProfile
 	// @Failure 400 {object} models.ErrorResponse
 	// @Failure 500 {object} models.ErrorResponse
@@ -30,7 +30,7 @@ type ExampleService interface {
 	// @Description Updates the user profile information for a given user ID.
 	// @Version 1
 	// @Param userID string path true
-	// @Param user body models.UserProfile true
+	// @Param user models.UserProfile body true
 	// @Success 200 {object} models.UserProfile
 	// @Failure 400 {object} models.ErrorResponse
 	// @Failure 404 {object} models.ErrorResponse
@@ -51,10 +51,9 @@ type ExampleService interface {
 	// @Summary Filter user profiles by age and country
 	// @Description Retrieves a list of user profiles filtered by age and country.
 	// @Version 1
-	// @Param age int query false
 	// @Param country string query false
 	// @Success 200 {array} models.UserProfile
 	// @Failure 500 {object} models.ErrorResponse
 	// @Router /users/filter [get]
-	FilterUserProfiles(age int, country string) ([]models.UserProfile, error)
+	FilterUserProfiles(country string) ([]models.UserProfile, error)
 }

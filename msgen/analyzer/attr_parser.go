@@ -20,11 +20,26 @@ func parseParamAttr(attrStr string) (models.SpecMethodParamAttribute, error) {
 		return models.SpecMethodParamAttribute{}, ErrInvalidParamAttr
 	}
 
+	fromPath := false
+	fromQuery := false
+	fromBody := false
+
+	switch parts[2] {
+	case "path":
+		fromPath = true
+	case "query":
+		fromQuery = true
+	case "body":
+		fromBody = true
+	}
+
 	return models.SpecMethodParamAttribute{
-		Name:     parts[0],
-		Type:     parts[1],
-		In:       parts[2],
-		Required: parts[3] == "true",
+		Name:      parts[0],
+		Type:      parts[1],
+		FromPath:  fromPath,
+		FromQuery: fromQuery,
+		FromBody:  fromBody,
+		Required:  parts[3] == "true",
 	}, nil
 }
 
