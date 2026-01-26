@@ -28,6 +28,8 @@ var templatingFuncs = template.FuncMap{
 	"buildRoutingTree": buildRoutingTree,
 	"indent":           indent,
 	"pascalCase":       pascalCase,
+	"trim":             strings.Trim,
+	"dict":             dict,
 }
 
 func RenderTemplate(name, templatePath string, data any) (string, error) {
@@ -118,6 +120,24 @@ func pascalCase(input string) string {
 	}
 
 	return strings.Join(words, "")
+}
+
+func dict(values ...any) map[string]any {
+	if len(values)%2 != 0 {
+		panic("dict requires an even number of arguments")
+	}
+
+	dict := make(map[string]any)
+
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			panic("dict keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+
+	return dict
 }
 
 func buildRoutingTree(methods []models.SpecMethod) *models.SpecRoutingNode {

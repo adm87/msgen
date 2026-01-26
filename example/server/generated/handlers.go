@@ -57,6 +57,48 @@ func getBodyParam[T any](r *http.Request, required bool) (T, *web.ServerError) {
 	return param, nil
 }
 
+// HealthCheck handles the GET /health endpoint.
+func HealthCheck(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger := s.logger.With("handler", "HealthCheck", "method", r.Method, "path", "/health")
+		context := ctx.NewContext(logger, r)
+
+		handlerErr := s.controller.HealthCheck(context)
+
+		if handlerErr != nil {
+			logger.Error(handlerErr.Error())
+			if serverErr, ok := handlerErr.(*web.ServerError); ok {
+				web.WriteErrorResponse(w, serverErr)
+			} else {
+				web.WriteErrorResponse(w, web.NewServerError(http.StatusInternalServerError, handlerErr.Error()))
+			}
+			return
+		}
+		w.WriteHeader(200)
+	}
+}
+
+// Readiness handles the GET /readiness endpoint.
+func Readiness(s *Server) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger := s.logger.With("handler", "Readiness", "method", r.Method, "path", "/readiness")
+		context := ctx.NewContext(logger, r)
+
+		handlerErr := s.controller.Readiness(context)
+
+		if handlerErr != nil {
+			logger.Error(handlerErr.Error())
+			if serverErr, ok := handlerErr.(*web.ServerError); ok {
+				web.WriteErrorResponse(w, serverErr)
+			} else {
+				web.WriteErrorResponse(w, web.NewServerError(http.StatusInternalServerError, handlerErr.Error()))
+			}
+			return
+		}
+		w.WriteHeader(200)
+	}
+}
+
 // CreateUserProfile handles the POST /v1/users endpoint.
 func CreateUserProfile(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -106,17 +106,22 @@ func configureLogger(s *Server) error {
 }
 
 func configureRoutes(s *Server) error {
-	r := s.router
-	r.Route("/v1", func(r chi.Router) {
-		r.Route("/users", func(r chi.Router) {
-			r.Post("/", CreateUserProfile(s))
-			r.Route("/filter", func(r chi.Router) {
-				r.Get("/", FilterUserProfiles(s))
+	s.router.Route("/health", func(health chi.Router) {
+		health.Get("/", HealthCheck(s))
+	})
+	s.router.Route("/readiness", func(readiness chi.Router) {
+		readiness.Get("/", Readiness(s))
+	})
+	s.router.Route("/v1", func(v1 chi.Router) {
+		v1.Route("/users", func(users chi.Router) {
+			users.Post("/", CreateUserProfile(s))
+			users.Route("/filter", func(filter chi.Router) {
+				filter.Get("/", FilterUserProfiles(s))
 			})
-			r.Route("/{userID}", func(r chi.Router) {
-				r.Delete("/", DeleteUserProfile(s))
-				r.Put("/", UpdateUserProfile(s))
-				r.Get("/", GetUserProfile(s))
+			users.Route("/{userID}", func(userID chi.Router) {
+				userID.Delete("/", DeleteUserProfile(s))
+				userID.Put("/", UpdateUserProfile(s))
+				userID.Get("/", GetUserProfile(s))
 			})
 		})
 	})

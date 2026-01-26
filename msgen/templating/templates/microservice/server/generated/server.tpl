@@ -106,8 +106,7 @@ func configureLogger(s *Server) error {
 }
 
 func configureRoutes(s *Server) error {
-    r := s.router
     {{- $routes := buildRoutingTree .Spec.Methods -}}
-    {{- template "configure.routes" $routes }}
+    {{- template "configure.routes" dict "routes" $routes "router" "s.router" }}
     return nil
 }

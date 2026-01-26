@@ -5,6 +5,17 @@ import "github.com/adm87/msgen/example/models"
 // @Summary Example service
 // @Description This is an example service specification, used to demonstrate the msgen tool.
 type ExampleService interface {
+	// @Summary Health check endpoint
+	// @Description Returns the health status of the service.
+	// @Success 200 {string} string
+	// @Router /health [get]
+	HealthCheck() error
+
+	// @Summary Readiness check endpoint
+	// @Description Returns the readiness status of the service.
+	// @Success 200 {string} string
+	// @Router /readiness [get]
+	Readiness() error
 
 	// @Summary Create a new user profile
 	// @Description Creates a new user profile with the provided information.

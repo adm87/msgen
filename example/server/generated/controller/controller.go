@@ -7,6 +7,8 @@ import (
 )
 
 type ExampleServiceController interface {
+	HealthCheck(c *ctx.Context) error
+	Readiness(c *ctx.Context) error
 	CreateUserProfile(c *ctx.Context, user models.CreateUserRequest) (models.UserProfile, error)
 	DeleteUserProfile(c *ctx.Context, userID string) error
 	UpdateUserProfile(c *ctx.Context, userID string, user models.UserProfile) (models.UserProfile, error)

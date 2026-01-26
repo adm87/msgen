@@ -16,6 +16,14 @@ func NewExampleServiceController() *ExampleServiceController {
 	}
 }
 
+func (c *ExampleServiceController) HealthCheck(ctx *ctx.Context) error {
+	return nil
+}
+
+func (c *ExampleServiceController) Readiness(ctx *ctx.Context) error {
+	return nil
+}
+
 func (c *ExampleServiceController) CreateUserProfile(ctx *ctx.Context, user models.CreateUserRequest) (models.UserProfile, error) {
 	panic("not implemented")
 }

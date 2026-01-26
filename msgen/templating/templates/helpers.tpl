@@ -60,13 +60,16 @@
     Recursively generates route configuration for the routing tree
 */ -}}
 {{- define "configure.routes" -}}
-{{- range $path, $node := .Children }}
-r.Route("/{{ $path }}", func(r chi.Router) {
+{{- $routes := .routes -}}
+{{- $router := .router -}}
+{{- range $path, $node := $routes.Children }}
+{{- $routerName := trim $path "{}" }}
+{{ $router }}.Route("/{{ $path }}", func({{ $routerName }} chi.Router) {
     {{- range $method := $node.Methods }}
-    r.{{ $method.Attributes.Router.Method | pascalCase }}("/", {{ $method.Name }}(s))
+    {{ $routerName }}.{{ $method.Attributes.Router.Method | pascalCase }}("/", {{ $method.Name }}(s))
     {{- end }}
     {{- if gt (len $node.Children) 0 }}
-        {{- template "configure.routes" $node }}
+        {{- template "configure.routes" dict "routes" $node "router" $routerName }}
     {{- end }}
 })
 {{- end }}
