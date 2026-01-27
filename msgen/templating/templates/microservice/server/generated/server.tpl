@@ -18,6 +18,8 @@ import (
 
 // Server represents the microservice server.
 type Server struct {
+    port  int
+
     router chi.Router
     controller controller.{{ .Spec.Name }}Controller
 
@@ -31,7 +33,23 @@ func NewServer(controller controller.{{ .Spec.Name }}Controller) *Server {
 		logger: slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		})).With("service", "{{ .Spec.Name }}"),
+        port: 8080,
     }
+}
+
+// Logger returns the server's logger.
+func (s *Server) Logger() *slog.Logger {
+    return s.logger
+}
+
+// SetLogger sets the server's logger.
+func (s *Server) SetLogger(logger *slog.Logger) {
+    s.logger = logger
+}
+
+// SetPort sets the port for the server to listen on.
+func (s *Server) SetPort(port int) {
+    s.port = port
 }
 
 // Start setups the server routing, middleware, and starts the controller.
@@ -57,7 +75,8 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	return http.ListenAndServe(":8080", s.router)
+    s.logger.Info("Starting server", "port", s.port)
+	return http.ListenAndServe(fmt.Sprintf(":%d", s.port), s.router)
 }
 
 // Stop shuts down the server and stops the controller.

@@ -1,4 +1,4 @@
-{{- template "disclaimer.go.noedit" }}
+{{- template "disclaimer.go.edit" }}
 package main
 
 import (
