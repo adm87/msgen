@@ -8,12 +8,12 @@ import (
 	"github.com/adm87/msgen/example/server/generated"
 )
 
-type ExampleArgs struct {
+type CmdArgs struct {
 	Port int
 }
 
 func main() {
-	args := parseFlags()
+	args := parseArgs()
 
 	s := generated.NewServer(server.NewExampleServiceController())
 	s.SetPort(args.Port)
@@ -23,12 +23,12 @@ func main() {
 	}
 }
 
-func parseFlags() *ExampleArgs {
-	args := &ExampleArgs{
+func parseArgs() *CmdArgs {
+	args := &CmdArgs{
 		Port: 8080,
 	}
 
-	flag.IntVar(&args.Port, "port", args.Port, "Port to run the server on")
+	flag.IntVar(&args.Port, "port", args.Port, "Port to listen on")
 	flag.Parse()
 
 	return args
