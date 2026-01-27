@@ -108,7 +108,7 @@ func NewUserServiceController() *UserServiceController {
     return &UserServiceController{}
 }
 
-func (ctlr *UserServiceController) GetUser(c *ctx.Context, userID string) (models.User, error) {
+func (c *UserServiceController) GetUser(ctx *ctx.Context, userID string) (models.User, error) {
     // Your implementation here
     user := models.User{
         ID:   userID,
@@ -117,7 +117,7 @@ func (ctlr *UserServiceController) GetUser(c *ctx.Context, userID string) (model
     return user, nil
 }
 
-func (ctlr *UserServiceController) CreateUser(c *ctx.Context, req models.CreateUserRequest) (models.User, error) {
+func (c *UserServiceController) CreateUser(ctx *ctx.Context, req models.CreateUserRequest) (models.User, error) {
     // Validate and create user
     if req.Name == "" {
         return models.User{}, web.NewServerError(http.StatusBadRequest, "name is required")
@@ -194,33 +194,33 @@ Implement optional hooks in your controller for server lifecycle events:
 
 ```go
 // Called when server starts (after routes are configured, before accepting requests)
-func (ctlr *YourController) Start(logger *slog.Logger) error {
+func (c *YourController) Start(logger *slog.Logger) error {
     // Initialize resources, connect to databases, etc.
     logger.Info("starting controller")
     return nil
 }
 
 // Called when server stops
-func (ctlr *YourController) Stop(logger *slog.Logger) error {
+func (c *YourController) Stop(logger *slog.Logger) error {
     // Cleanup resources
     logger.Info("stopping controller")
     return nil
 }
 
 // Customize the logger (called during server initialization)
-func (ctlr *YourController) ConfigureLogger(logger *slog.Logger) {
+func (c *YourController) ConfigureLogger(logger *slog.Logger) {
     // Customize logging configuration
 }
 
 // Add custom middleware to the main router
-func (ctlr *YourController) ConfigureRouter(r chi.Router, logger *slog.Logger) {
+func (c *YourController) ConfigureRouter(r chi.Router, logger *slog.Logger) {
     r.Use(middleware.RequestID)
     r.Use(middleware.Logger)
     logger.Info("configured router middleware")
 }
 
 // Customize routers for specific path scopes
-func (ctlr *YourController) ConfigureScopedRouter(r chi.Router, path string, logger *slog.Logger) {
+func (c *YourController) ConfigureScopedRouter(r chi.Router, path string, logger *slog.Logger) {
     // Add path-specific middleware
     if path == "/admin" {
         r.Use(middleware.BasicAuth("admin-realm", map[string]string{"admin": "password"}))
@@ -235,6 +235,8 @@ func (ctlr *YourController) ConfigureScopedRouter(r chi.Router, path string, log
 your-project/
 ├── main.go                          # Entry point (generated once, can edit)
 ├── msgen.json                       # MSGen configuration
+├── Dockerfile                       # Docker build config (generated once, can edit)
+├── .dockerignore                    # Docker ignore file (generated once, can edit)
 ├── spec/
 │   └── spec.go                      # Your service specification
 ├── models/                          # Your data models
@@ -303,6 +305,8 @@ msgen update -s spec/spec.go
 - `main.go` - Entry point customization
 - `server/controller.go` - Business logic implementation
 - `models/*.go` - Data models
+- `Dockerfile` - Docker build configuration
+- `.dockerignore` - Files to exclude from Docker build context
 
 ### Files You Should NOT Edit
 
@@ -310,6 +314,66 @@ Any file in a `generated/` directory:
 - `server/generated/**/*.go`
 
 These files are regenerated when you run `msgen update`.
+
+## Docker Support
+
+MSGen automatically generates a multi-stage Dockerfile optimized for Go applications. This file is generated only once during project creation, allowing you to customize it for your specific needs.
+
+### Generated Dockerfile
+
+The default Dockerfile uses a multi-stage build to create a minimal production image:
+
+```dockerfile
+ARG GO_IMAGE_VERSION
+
+# Stage 1: Build the Go application
+FROM golang:${GO_IMAGE_VERSION} AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o YourService .
+
+# Stage 2: Create a minimal runtime image
+FROM alpine:latest
+
+WORKDIR /app
+
+COPY --from=builder /app/YourService .
+
+ENTRYPOINT ["/app/YourService"] 
+CMD ["--port", "8080"]
+```
+
+### Building and Running with Docker
+
+```bash
+# Build the Docker image
+docker build --build-arg GO_IMAGE_VERSION=1.25.6 -t my-service:latest .
+
+# Run the container
+docker run -p 8080:8080 my-service:latest
+
+# Run with custom port
+docker run -p 3000:3000 my-service:latest --port 3000
+```
+
+### Customizing the Dockerfile
+
+Since the Dockerfile is only generated once, you're free to modify it as needed:
+
+- Add additional build arguments or environment variables
+- Install system dependencies in the Alpine image
+- Change the base images
+- Add health checks
+- Configure multi-platform builds
+- Add additional build steps or tools
+
+The generated `.dockerignore` file excludes common development files from the build context to keep your images lean. You can also customize this file to suit your needs.
 
 ### Error Handling
 
@@ -321,12 +385,12 @@ import (
     "net/http"
 )
 
-func (ctlr *Controller) GetUser(c *ctx.Context, id string) (User, error) {
+func (c *Controller) GetUser(ctx *ctx.Context, id string) (User, error) {
     if id == "" {
         return User{}, web.NewServerError(http.StatusBadRequest, "ID is required")
     }
     
-    user, err := ctlr.db.FindUser(id)
+    user, err := c.db.FindUser(id)
     if err != nil {
         return User{}, web.NewServerError(http.StatusNotFound, "User not found")
     }
@@ -340,12 +404,12 @@ func (ctlr *Controller) GetUser(c *ctx.Context, id string) (User, error) {
 Each handler receives a context with logger and HTTP request:
 
 ```go
-func (ctlr *Controller) GetUser(c *ctx.Context, id string) (User, error) {
+func (c *Controller) GetUser(ctx *ctx.Context, id string) (User, error) {
     // Access logger
-    c.Logger().Info("fetching user", "id", id)
+    ctx.Logger().Info("fetching user", "id", id)
     
     // Access raw HTTP request if needed
-    req := c.Request()
+    req := ctx.Request()
     userAgent := req.Header.Get("User-Agent")
     
     // ...
@@ -363,7 +427,7 @@ MSGen creates a `msgen.json` configuration file:
 }
 ```
 
-This tracks the code generator version and module URL for consistency during updates.
+This tracks the code generator version (set to the msgen version at generation time) and module URL for consistency during updates.
 
 ## Examples
 
@@ -397,7 +461,7 @@ curl http://localhost:8080/v1/users/filter?country=US
 
 ## Requirements
 
-- Go 1.21 or higher
+- Go 1.25.6 or higher
 - Dependencies (automatically installed):
   - `github.com/spf13/cobra` - CLI framework
   - `github.com/go-chi/chi/v5` - HTTP router

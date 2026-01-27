@@ -19,6 +19,16 @@ var MicroserviceTemplateTree = &Node{
 			GenerateOnce: true,
 		},
 		{
+			Name:         ".dockerignore",
+			Template:     "templates/microservice/dockerignore.tpl",
+			GenerateOnce: true,
+		},
+		{
+			Name:         "Dockerfile",
+			Template:     "templates/microservice/docker-file.tpl",
+			GenerateOnce: true,
+		},
+		{
 			Name: "server",
 			Children: []*Node{
 				{

@@ -25,21 +25,59 @@ func (c *ExampleServiceController) Readiness(ctx *ctx.Context) error {
 }
 
 func (c *ExampleServiceController) CreateUserProfile(ctx *ctx.Context, user models.CreateUserRequest) (models.UserProfile, error) {
-	panic("not implemented")
+	profile := models.UserProfile{
+		UID:     "generated-id", // In a real implementation, generate a unique ID
+		Email:   user.Email,
+		Country: user.Country,
+	}
+
+	ctx.Logger().Info("Created user profile", "uid", profile.UID)
+
+	return profile, nil
 }
 
 func (c *ExampleServiceController) DeleteUserProfile(ctx *ctx.Context, userID string) error {
-	panic("not implemented")
+	// In a real implementation, delete the user profile from storage
+	ctx.Logger().Info("Deleted user profile", "uid", userID)
+	return nil
 }
 
 func (c *ExampleServiceController) UpdateUserProfile(ctx *ctx.Context, userID string, user models.UserProfile) (models.UserProfile, error) {
-	panic("not implemented")
+	// In a real implementation, update the user profile in storage
+	updatedProfile := models.UserProfile{
+		UID:     userID,
+		Email:   user.Email,
+		Country: user.Country,
+	}
+	ctx.Logger().Info("Updated user profile", "uid", userID)
+	return updatedProfile, nil
 }
 
 func (c *ExampleServiceController) GetUserProfile(ctx *ctx.Context, userID string) (models.UserProfile, error) {
-	panic("not implemented")
+	// In a real implementation, retrieve the user profile from storage
+	profile := models.UserProfile{
+		UID:     userID,
+		Email:   "user@example.com",
+		Country: "CountryName",
+	}
+	ctx.Logger().Info("Retrieved user profile", "uid", userID)
+	return profile, nil
 }
 
 func (c *ExampleServiceController) FilterUserProfiles(ctx *ctx.Context, country string) ([]models.UserProfile, error) {
-	panic("not implemented")
+	// In a real implementation, filter user profiles from storage
+	profiles := []models.UserProfile{
+		{
+			UID:     "user1",
+			Email:   "user1@example.com",
+			Country: "Country1",
+		},
+		{
+			UID:     "user2",
+			Email:   "user2@example.com",
+			Country: "Country2",
+		},
+	}
+	ctx.Logger().Info("Filtered user profiles", "country", country)
+	return profiles, nil
 }
