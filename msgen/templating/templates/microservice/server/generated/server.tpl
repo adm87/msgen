@@ -12,6 +12,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+func createLogger(level slog.Level) *slog.Logger {
+	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	})).With("service", "{{ .Spec.Name }}")
+}
+
 // =================================================================
 // Server implementation
 // =================================================================
@@ -19,6 +25,7 @@ import (
 // Server represents the microservice server.
 type Server struct {
     port  int
+	silenceStartup bool
 
     router chi.Router
     controller controller.{{ .Spec.Name }}Controller
@@ -30,11 +37,13 @@ type Server struct {
 func NewServer(controller controller.{{ .Spec.Name }}Controller) *Server {
     return &Server{
         controller: controller,
-		logger: slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})).With("service", "{{ .Spec.Name }}"),
+		logger: createLogger(slog.LevelInfo),
         port: 8080,
     }
+}
+
+func (s *Server) SilenceStartupLog(silence bool) {
+	s.silenceStartup = silence
 }
 
 // Logger returns the server's logger.
@@ -45,6 +54,11 @@ func (s *Server) Logger() *slog.Logger {
 // SetLogger sets the server's logger.
 func (s *Server) SetLogger(logger *slog.Logger) {
     s.logger = logger
+}
+
+// SetLogLevel sets the log level.
+func (s *Server) SetLogLevel(level slog.Level) {
+	s.logger = createLogger(level)
 }
 
 // SetPort sets the port for the server to listen on.
@@ -62,7 +76,7 @@ func (s *Server) Start() error {
 	})
 
 	if controller, ok := s.controller.(OnConfigureLogger); ok {
-		controller.ConfigureLogger(s.logger,)
+		controller.ConfigureLogger(s.logger)
 	}
 
 	if controller, ok := s.controller.(OnConfigureRouter); ok {
@@ -75,7 +89,10 @@ func (s *Server) Start() error {
 		return err
 	}
 
-    s.logger.Info("Starting server", "port", s.port)
+    if !s.silenceStartup {
+        s.logger.Info("Starting server", "port", s.port)
+    }
+
 	return http.ListenAndServe(fmt.Sprintf(":%d", s.port), s.router)
 }
 
