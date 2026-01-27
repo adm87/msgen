@@ -22,6 +22,13 @@ func main() {
 }
 
 func exit(code int, msg string) {
-	log.Error(msg)
+	if msg == "" {
+		os.Exit(code)
+	}
+	if code > 0 {
+		log.Error(msg)
+	} else {
+		log.Info(msg)
+	}
 	os.Exit(code)
 }
