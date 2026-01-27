@@ -418,12 +418,10 @@ curl http://localhost:8080/v1/users/filter?country=US
 Current limitations (WIP):
 - Only supports REST/JSON APIs (no GraphQL, gRPC)
 - Limited to basic Go types and model references
-- Fixed server port (`:8080`) - will be configurable
 - No OpenAPI/Swagger generation yet
 - No client SDK generation
 
 Planned features:
-- Configurable server options (port, timeouts, etc.)
 - OpenAPI/Swagger documentation generation
 - Custom middleware support
 - Validation tag support
