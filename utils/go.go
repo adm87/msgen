@@ -15,7 +15,6 @@ var (
 	ErrMustNotBeEmpty     = errors.New("value must not be empty")
 	ErrMustBeLowercase    = errors.New("value must be lowercase")
 	ErrInvalidModulePath  = errors.New("value contains invalid characters for a module path")
-	ErrMustContainDot     = errors.New("module path must contain at least one dot (.)")
 	ErrContainsInvalidSeq = errors.New("module path contains invalid sequences")
 )
 
@@ -33,10 +32,6 @@ func ValidateModuleUrl(moduleUrl string) error {
 
 	if err != nil || !matched {
 		return ErrInvalidModulePath
-	}
-
-	if !strings.Contains(moduleUrl, ".") {
-		return ErrMustContainDot
 	}
 
 	invalidSequences := []string{"//", "..", ".-", "-.", "/_", "_/"}

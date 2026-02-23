@@ -86,7 +86,7 @@ func parseTypeSpec(genDecl *ast.GenDecl, Spec *models.Spec) error {
 	}
 
 	if len(interfaceType.Methods.List) == 0 {
-		return ErrSpecMissingMethods
+		return nil
 	}
 
 	Spec.Name = typeSpec.Name.Name

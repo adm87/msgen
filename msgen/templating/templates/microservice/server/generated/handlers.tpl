@@ -8,7 +8,9 @@ import (
 	"net/http"
 
     {{ template "import.statements" .Spec.Imports }}
+    {{- if gt (len .Spec.Imports) 0 }}
     "{{ .MSGenConfig.ModuleUrl }}/server/generated/ctx"
+    {{- end }}
     "{{ .MSGenConfig.ModuleUrl }}/server/generated/web"
 
 	"github.com/go-chi/chi/v5"
