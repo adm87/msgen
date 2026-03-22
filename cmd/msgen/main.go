@@ -50,6 +50,17 @@ func validateArgs(args *models.MSGenArgs) error {
 	}
 	args.MSGenYML = path
 
+	info, err := os.Stat(args.MSGenYML)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("config file not found at path: %s", args.MSGenYML)
+	}
+	if err != nil {
+		return fmt.Errorf("error accessing config file: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("config path must be a directory containing msgen.yml: %s", args.MSGenYML)
+	}
+
 	path, err = filepath.Abs(args.OutputPath)
 	if err != nil {
 		return fmt.Errorf("error resolving output path: %w", err)
