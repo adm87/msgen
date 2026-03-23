@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"regexp"
+	"syscall"
 
 	"github.com/adm87/msgen/cmd/msgen/initialize"
 	"github.com/adm87/msgen/cmd/msgen/update"
@@ -107,7 +110,10 @@ func init() {
 }
 
 func main() {
-	if err := msgen.Execute(); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	if err := msgen.ExecuteContext(ctx); err != nil {
 		fmt.Printf("error executing command: %v\n", err)
 		os.Exit(1)
 	}

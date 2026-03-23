@@ -15,7 +15,7 @@ type MSGenArgs struct {
 // ------------------------------------------------------------
 
 type InitializeArgs struct {
-	MSGenArgs
+	*MSGenArgs
 
 	Module string
 }
@@ -25,7 +25,7 @@ type InitializeArgs struct {
 // ------------------------------------------------------------
 
 type UpdateArgs struct {
-	MSGenArgs
+	*MSGenArgs
 
 	SpecFile string
 }
